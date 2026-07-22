@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { add, divide } from '../calculator.js';
 
 describe('add', () => {
@@ -9,6 +10,6 @@ describe('add', () => {
 
 describe('divide', () => {
   it('should divide for testing errors', () => {
-    expect(divide(10, 2)).toBe(6);
+    expect(divide(10, 2)).toBe(5);
   });
 });
