@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { add, divide, process, greet } from '../calculator.js';
 
 describe('add', () => {
@@ -21,7 +21,7 @@ describe('process', () => {
 
 describe('greet', () => {
   it('should log greeting', () => {
-    const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     greet('World');
     expect(spy).toHaveBeenCalledWith('Hello World');
     spy.mockRestore();
