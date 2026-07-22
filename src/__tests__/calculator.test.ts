@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-
-import { add, divide } from '../calculator.js';
+import { add, divide, process, greet } from '../calculator.js';
 
 describe('add', () => {
   it('should add two numbers', () => {
@@ -9,7 +8,22 @@ describe('add', () => {
 });
 
 describe('divide', () => {
-  it('should divide for testing errors', () => {
+  it('should divide two numbers', () => {
     expect(divide(10, 2)).toBe(5);
+  });
+});
+
+describe('process', () => {
+  it('should parse string to number and add', () => {
+    expect(process('5')).toBe(15);
+  });
+});
+
+describe('greet', () => {
+  it('should log greeting', () => {
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    greet('World');
+    expect(spy).toHaveBeenCalledWith('Hello World');
+    spy.mockRestore();
   });
 });

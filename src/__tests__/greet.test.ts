@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
 import { greet, greetWithTime, farewell } from '../utils/greet.js';
 
 describe('greet', () => {
@@ -13,8 +14,12 @@ describe('greet', () => {
 });
 
 describe('greetWithTime', () => {
-  beforeEach(() => { vi.useFakeTimers(); });
-  afterEach(() => { vi.useRealTimers(); });
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
   it('should say Good morning before 12:00', () => {
     vi.setSystemTime(new Date('2026-07-22T09:00:00'));
     expect(greetWithTime('Alice')).toBe('Good morning, Alice!');
