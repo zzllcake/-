@@ -119,5 +119,5 @@ module.exports = {
     'no-duplicate-imports': 'off', // 用 import/no-duplicates 替代
     'import/no-useless-path-segments': 'error',
   },
-  ignorePatterns: ['dist', 'coverage', 'node_modules', '*.config.*', 'src/error-types.ts'],
+  ignorePatterns: ['dist', 'coverage', 'node_modules', '*.config.*', 'src/error-types.ts', 'src/error-types-500.ts', 'scripts/'],
 };
