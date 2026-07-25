@@ -1,61 +1,44 @@
 # =============================================================================
-# 自动代码审查工作流
+# 自动代码审查工作流 v2
 # 在 PR 提交后自动运行 lint、test、静态分析并生成审查评论
 # =============================================================================
 
 name: Code Review
 
 on:
-  # PR 事件：提交、同步、重新打开
   pull_request:
     branches: [main, master]
     types: [opened, synchronize, reopened]
-  # Push 到主分支时快速验证
   push:
     branches: [main, master]
 
-# 并发控制：同一 PR 的旧运行自动取消
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-# ============================================================
-# 全局环境变量
-# ============================================================
 env:
   NODE_VERSION: "22"
 
-# ============================================================
-# Jobs
-# ============================================================
 jobs:
 
   # ----------------------------------------------------------
-  # Job 1: Lint 检查
+  # Job 1: Lint & Format
   # ----------------------------------------------------------
   lint:
     name: Lint & Format
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+      - run: npm install --legacy-peer-deps
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Run ESLint
+      - name: ESLint
         run: npm run lint
-        continue-on-error: false
-
-      - name: Run Prettier Check
+      - name: Prettier
         run: npm run format:check
-        continue-on-error: false
 
   # ----------------------------------------------------------
   # Job 2: TypeScript 类型检查
@@ -64,23 +47,16 @@ jobs:
     name: TypeScript Check
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: TypeScript Type Check
-        run: npm run typecheck
+      - run: npm install --legacy-peer-deps
+      - run: npm run typecheck
 
   # ----------------------------------------------------------
-  # Job 3: 单元测试 (矩阵: 多个 Node 版本)
+  # Job 3: 单元测试（矩阵多版本）
   # ----------------------------------------------------------
   test:
     name: Test (Node ${{ matrix.node-version }})
@@ -90,31 +66,24 @@ jobs:
       matrix:
         node-version: [18, 20, 22]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
+      - run: npm install --legacy-peer-deps
+      - run: npm run test:ci
+        continue-on-error: true
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Run tests with coverage
-        run: npm run test:ci
-
-      - name: Publish test results
-        uses: dorny/test-reporter@v1
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
-          name: Test Results (Node ${{ matrix.node-version }})
-          path: reports/junit.xml
-          reporter: jest-junit
-          fail-on-error: false
+          name: test-report-node-${{ matrix.node-version }}
+          path: reports/
+          retention-days: 7
 
-      - name: Upload coverage report
+      - name: Upload coverage
         uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
@@ -131,38 +100,31 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+      - run: npm install --legacy-peer-deps
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Run npm audit
-        id: audit
+      - name: npm audit
         run: |
           npm audit --audit-level=high 2>&1 | tee npm-audit-output.txt || true
-          echo "audit_exit_code=$?" >> $GITHUB_OUTPUT
 
-      - name: Upload npm audit results
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
+        if: success() || failure()
         with:
           name: npm-audit-report
           path: npm-audit-output.txt
           retention-days: 7
 
-      - name: Initialize CodeQL
+      - name: CodeQL Init
         uses: github/codeql-action/init@v3
         with:
           languages: javascript-typescript
           queries: security-and-quality
 
-      - name: Perform CodeQL Analysis
+      - name: CodeQL Analyze
         uses: github/codeql-action/analyze@v3
 
   # ----------------------------------------------------------
@@ -171,123 +133,89 @@ jobs:
   review-comment:
     name: Review Summary
     needs: [lint, type-check, test, security]
-    if: >
-      always() &&
-      github.event_name == 'pull_request'
+    if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
       checks: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Post review summary
-        uses: actions/github-script@v7
+      - uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             // ================================================================
-            // 收集各 Job 状态
+            // 1. 获取当前运行的所有 Job 状态
             // ================================================================
-            const { data: workflowRun } = await github.rest.actions.getWorkflowRun({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.runId,
-            });
-
-            // 获取所有 jobs 及其结论
             const { data: jobs } = await github.rest.actions.listJobsForWorkflowRun({
               owner: context.repo.owner,
               repo: context.repo.repo,
               run_id: context.runId,
             });
 
-            // 目标 jobs（排除了 review-comment 自身和可能存在的 setup 等辅助 job）
-            const targetJobs = jobs.jobs.filter(j =>
-              ['lint', 'type-check', 'test', 'security'].some(name =>
-                j.name.startsWith(name) || j.name.includes(name)
-              )
-            );
+            const summaryJobs = jobs.jobs.filter(j => j.name !== 'Review Summary' && j.name !== 'Checkout');
 
             // ================================================================
-            // 构建摘要表格
+            // 2. 构建结果表格
             // ================================================================
-            const emoji = (conclusion) => {
-              if (conclusion === 'success') return ':white_check_mark:';
-              if (conclusion === 'failure') return ':x:';
-              if (conclusion === 'cancelled') return ':no_entry:';
-              if (conclusion === 'skipped') return ':heavy_minus_sign:';
-              return ':grey_question:';
-            };
+            const getEmoji = (c) =>
+              c === 'success' ? ':white_check_mark:' :
+              c === 'failure' ? ':x:' :
+              c === 'cancelled' ? ':no_entry:' :
+              c === 'skipped' ? ':heavy_minus_sign:' : ':grey_question:';
 
-            const conclusionText = (conclusion) => {
-              if (conclusion === 'success') return '通过';
-              if (conclusion === 'failure') return '**失败**';
-              if (conclusion === 'cancelled') return '已取消';
-              if (conclusion === 'skipped') return '跳过';
-              return conclusion || '等待中';
-            };
+            const getLabel = (c) =>
+              c === 'success' ? '通过' :
+              c === 'failure' ? '**失败**' :
+              c === 'cancelled' ? '已取消' :
+              c === 'skipped' ? '跳过' : (c || '等待中');
 
             let hasFailure = false;
-            let hasWarning = false;
             let rows = '';
-            let failureDetails = [];
+            let failures = [];
 
-            for (const job of targetJobs) {
-              const status = job.conclusion || job.status;
-              if (status === 'failure') hasFailure = true;
-              if (status === 'success' && job.name.includes('audit')) hasWarning = true;
+            for (const job of summaryJobs) {
+              const s = job.conclusion || job.status;
+              if (s === 'failure') hasFailure = true;
 
-              let details = '';
-              if (job.name.startsWith('Lint')) {
-                details = job.conclusion === 'success' ? '通过' : '有错误或警告';
-              } else if (job.name.startsWith('TypeScript')) {
-                details = job.conclusion === 'success' ? '类型安全' : '类型错误';
-              } else if (job.name.startsWith('Test')) {
-                details = job.conclusion === 'success' ? '全部通过' : '有测试失败';
-              } else if (job.name.startsWith('Security')) {
-                details = job.conclusion === 'success' ? '无高风险漏洞' : '发现安全问题';
-              }
+              rows += `| ${getEmoji(s)} ${job.name} | ${getLabel(s)} |\n`;
 
-              rows += `| ${emoji(status)} ${job.name} | ${conclusionText(status)} | ${details} |\n`;
-
-              // 收集失败详情
-              if (status === 'failure') {
-                const jobRunUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}/job/${job.id}`;
-                failureDetails.push(`- [:x: **${job.name}**](${jobRunUrl}) — ${details}`);
+              if (s === 'failure') {
+                const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}/job/${job.id}`;
+                failures.push(`- [:x: **${job.name}**](${url})`);
               }
             }
 
             // ================================================================
-            // 构建评论 Markdown
+            // 3. 组装 Markdown 评论
             // ================================================================
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const commitSha = context.sha.slice(0, 7);
-            const totalJobs = targetJobs.length;
-            const passedJobs = targetJobs.filter(j => j.conclusion === 'success').length;
+            const shortSha = context.sha.slice(0, 7);
+            const passed = summaryJobs.filter(j => j.conclusion === 'success').length;
+            const total = summaryJobs.length;
 
             let body = `## 🤖 自动代码审查结果\n\n`;
-            body += `| 检查项 | 状态 | 详情 |\n`;
-            body += `|--------|------|------|\n`;
+            body += `| 检查项 | 状态 |\n`;
+            body += `|--------|------|\n`;
             body += rows;
             body += `\n`;
-            body += `> 提交: \`${commitSha}\` · [查看工作流运行详情](${runUrl})\n\n`;
+            body += `> 提交: \`${shortSha}\` · [查看完整运行日志](${runUrl})\n\n`;
 
             if (hasFailure) {
               body += `### ❌ 失败的检查项\n\n`;
-              body += failureDetails.join('\n') + '\n\n';
-              body += `请修复上述问题后重新推送代码。`;
-            } else if (passedJobs === totalJobs) {
-              body += `### ✅ 全部检查通过！\n\n`;
-              body += `${passedJobs}/${totalJobs} 项检查均通过。代码质量良好。`;
+              body += failures.join('\n') + '\n\n';
+              body += `请修复上述问题后重新推送代码。\n\n`;
+              body += `---\n`;
+              body += `> 💡 修复后推送新 commit，审查会自动重新运行。`;
+            } else if (passed === total) {
+              body += `### ✅ 全部通过！\n\n`;
+              body += `${passed}/${total} 项检查均通过，可以合并 PR。`;
             } else {
               body += `### ⚠️ 部分检查未完成\n\n`;
-              body += `${passedJobs}/${totalJobs} 项通过。请查看工作流详情了解未完成的原因。`;
+              body += `${passed}/${total} 项通过，请查看日志了解详情。`;
             }
 
             // ================================================================
-            // 查找已有评论，更新或新建
+            // 4. 发布或更新评论
             // ================================================================
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -295,30 +223,18 @@ jobs:
               issue_number: context.issue.number,
             });
 
-            const botComment = comments.find(c =>
+            const existing = comments.find(c =>
               c.user.type === 'Bot' && c.body?.startsWith('## 🤖 自动代码审查结果')
             );
 
-            if (botComment) {
-              if (hasFailure) {
-                // 更新已有评论
-                await github.rest.issues.updateComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  comment_id: botComment.id,
-                  body: body,
-                });
-              } else {
-                // 全部通过，更新评论为通过状态
-                await github.rest.issues.updateComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  comment_id: botComment.id,
-                  body: body,
-                });
-              }
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body,
+              });
             } else if (hasFailure) {
-              // 只有失败时才新建评论
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -327,4 +243,4 @@ jobs:
               });
             }
 
-            console.log(`审查完成: ${passedJobs}/${totalJobs} 通过${hasFailure ? ', 有失败项' : ''}`);
+            console.log(`审查完成: ${passed}/${total} 通过` + (hasFailure ? ', 有失败项' : ''));

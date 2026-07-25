@@ -29,21 +29,41 @@ module.exports = {
     },
   },
   rules: {
-    // 允许 console 使用（Node.js 项目常见）
+    // ============================================================
+    // 允许
+    // ============================================================
     'no-console': 'off',
     '@typescript-eslint/no-unsafe-call': 'off',
     '@typescript-eslint/no-unsafe-member-access': 'off',
+    '@typescript-eslint/explicit-function-return-type': 'off',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
 
-    // 自定义规则
+    // ============================================================
+    // 错误级别（会阻断 CI）
+    // ============================================================
+
+    // TypeScript 相关
     '@typescript-eslint/no-unused-vars': [
       'error',
       { argsIgnorePattern: '^_', destructuredArrayIgnorePattern: '^_' },
     ],
     '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
-    '@typescript-eslint/explicit-function-return-type': 'warn',
-    '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/no-explicit-any': 'error',
+    '@typescript-eslint/no-unsafe-assignment': 'error',
+    '@typescript-eslint/no-unsafe-argument': 'error',
+    '@typescript-eslint/no-unsafe-return': 'error',
+
+    // 最佳实践
+    'no-var': 'error',
+    'prefer-const': 'error',
+    'eqeqeq': ['error', 'always', { null: 'never' }],
+    'no-eval': 'error',
+    'no-duplicate-imports': 'error',
+    'prefer-template': 'error',
+
+    // Import 排序
     'import/order': [
-      'warn',
+      'error',
       {
         groups: [
           'builtin',
@@ -58,6 +78,7 @@ module.exports = {
       },
     ],
     'import/no-duplicates': 'error',
+    'no-duplicate-imports': 'off', // 用 import/no-duplicates 替代
   },
   ignorePatterns: ['dist', 'coverage', 'node_modules', '*.config.*'],
 };
