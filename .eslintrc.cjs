@@ -61,6 +61,14 @@ module.exports = {
     '@typescript-eslint/prefer-nullish-coalescing': 'error',
     '@typescript-eslint/no-unnecessary-type-assertion': 'error',
     '@typescript-eslint/no-inferrable-types': 'error',
+    // 新增：增强 TypeScript 检查
+    '@typescript-eslint/no-confusing-non-null-assertion': 'error',
+    '@typescript-eslint/no-duplicate-enum-values': 'error',
+    '@typescript-eslint/no-unnecessary-type-constraint': 'error',
+    '@typescript-eslint/prefer-as-const': 'error',
+    '@typescript-eslint/prefer-optional-chain': 'error',
+    '@typescript-eslint/prefer-reduce-type-parameter': 'error',
+    '@typescript-eslint/strict-boolean-expressions': 'error',
 
     // ----- 最佳实践规则 -----
     'no-var': 'error',
@@ -83,6 +91,19 @@ module.exports = {
     'no-useless-concat': 'error',
     'no-useless-rename': 'error',
     'object-shorthand': ['error', 'always'],
+    // 新增：增强代码质量
+    'no-constructor-return': 'error',
+    'no-dupe-else-if': 'error',
+    'no-duplicate-case': 'error',
+    'no-loss-of-precision': 'error',
+    'no-promise-executor-return': 'error',
+    'no-setter-return': 'error',
+    'no-sparse-arrays': 'error',
+    'no-unreachable-loop': 'error',
+    'no-unsafe-negation': 'error',
+    'no-unsafe-optional-chaining': 'error',
+    'no-nonoctal-decimal-escape': 'error',
+    'no-useless-backreference': 'error',
 
     // ----- 复杂度控制 -----
     'max-params': ['warn', 5],
