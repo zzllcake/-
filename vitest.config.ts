@@ -16,6 +16,8 @@ export default defineConfig({
         'src/**/*.{test,spec}.{ts,tsx}',
         'src/**/*.d.ts',
         'src/index.ts',
+        'src/error-types.ts',
+        'src/error-types-500.ts',
       ],
       thresholds: {
         statements: 80,
