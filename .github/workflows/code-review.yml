@@ -3,7 +3,7 @@
 # 在 PR 提交后自动运行 lint、test、静态分析并生成审查评论
 # =============================================================================
 
-name: Code Review
+name: 🤖 代码审查
 
 on:
   pull_request:
@@ -25,7 +25,7 @@ jobs:
   # Job 1: Lint & Format
   # ----------------------------------------------------------
   lint:
-    name: Lint & Format
+    name: 🔍 代码规范检查
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
   # Job 2: TypeScript 类型检查
   # ----------------------------------------------------------
   type-check:
-    name: TypeScript Check
+    name: 🔷 类型安全检查
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -59,7 +59,7 @@ jobs:
   # Job 3: 单元测试（矩阵多版本）
   # ----------------------------------------------------------
   test:
-    name: Test (Node ${{ matrix.node-version }})
+    name: 🧪 测试 (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -95,7 +95,7 @@ jobs:
   # Job 4: 安全扫描
   # ----------------------------------------------------------
   security:
-    name: Security Scan
+    name: 🛡️ 安全扫描
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -131,7 +131,7 @@ jobs:
   # Job 5: 汇总结果 → PR 评论
   # ----------------------------------------------------------
   review-comment:
-    name: Review Summary
+    name: 📝 审查汇总
     needs: [lint, type-check, test, security]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -152,7 +152,7 @@ jobs:
               run_id: context.runId,
             });
 
-            const summaryJobs = jobs.jobs.filter(j => j.name !== 'Review Summary' && j.name !== 'Checkout');
+            const summaryJobs = jobs.jobs.filter(j => j.name !== '📝 审查汇总' && j.name !== 'Checkout');
 
             // ================================================================
             // 2. 构建结果表格
