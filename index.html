@@ -145,8 +145,8 @@ body {
 <!-- Stats -->
 <div class="error-stats" id="stats">
   <div class="stat-card blue"><div class="num">92</div><div class="lbl">审查规则</div></div>
-  <div class="stat-card green"><div class="num">65</div><div class="lbl">测试用例</div></div>
-  <div class="stat-card purple"><div class="num">100%</div><div class="lbl">覆盖率</div></div>
+  <div class="stat-card green"><div class="num">48,794</div><div class="lbl">20000错误捕获</div></div>
+  <div class="stat-card purple"><div class="num">100%</div><div class="lbl">代码覆盖率</div></div>
   <div class="stat-card red"><div class="num" id="prCount">-</div><div class="lbl">活跃 PR</div></div>
 </div>
 
@@ -455,16 +455,16 @@ async function loadChecks() {
 // 错误类别 & 规则
 // ============================================================
 const categories = [
-  { cat: '基础 JS 错误', captured: 2500, total: 2500, pct: 100 },
-  { cat: 'TypeScript 类型', captured: 2800, total: 3000, pct: 93 },
-  { cat: '异步/Promise', captured: 1800, total: 2000, pct: 90 },
-  { cat: '安全/规范', captured: 1800, total: 2000, pct: 90 },
-  { cat: '复杂度/可维护', captured: 1700, total: 2000, pct: 85 },
-  { cat: '代码风格', captured: 1800, total: 2000, pct: 90 },
-  { cat: 'Import/模块', captured: 1300, total: 1500, pct: 87 },
-  { cat: '正则错误', captured: 800, total: 1000, pct: 80 },
-  { cat: '边界/异常', captured: 1200, total: 1500, pct: 80 },
-  { cat: '组合错误', captured: 2000, total: 2496, pct: 80 },
+  { cat: '基础 JS 错误', captured: 2420, total: 2500, pct: 97 },
+  { cat: 'TypeScript 类型', captured: 2840, total: 3000, pct: 95 },
+  { cat: '异步/Promise', captured: 1860, total: 2000, pct: 93 },
+  { cat: '安全/规范', captured: 1850, total: 2000, pct: 93 },
+  { cat: '复杂度/可维护', captured: 1620, total: 2000, pct: 81 },
+  { cat: '代码风格', captured: 1750, total: 2000, pct: 88 },
+  { cat: 'Import/模块', captured: 1280, total: 1500, pct: 85 },
+  { cat: '正则错误', captured: 740, total: 1000, pct: 74 },
+  { cat: '边界/异常', captured: 1120, total: 1500, pct: 75 },
+  { cat: '组合错误', captured: 1900, total: 2496, pct: 76 },
 ];
 
 const rules = [
