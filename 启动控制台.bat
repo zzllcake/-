@@ -1,24 +1,42 @@
 @echo off
 chcp 65001 >nul
-echo 🤖 正在启动代码审查控制台...
+title 🤖 代码审查控制台
+
 cd /d "%~dp0"
 
-:: 获取 GitHub Token
-for /f "delims=" %%t in ('gh auth token 2^>nul') do set TOKEN=%%t
+echo.
+echo  ╔═══════════════════════════════════════╗
+echo  ║    🤖 正在启动代码审查控制台           ║
+echo  ╚═══════════════════════════════════════╝
+echo.
 
-if "%TOKEN%"=="" (
-  echo ⚠️ 未检测到 GitHub Token
-  echo 请先登录: gh auth login
+:: 检查 Node.js
+where node >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+  echo ❌ 未找到 Node.js，请先安装
   pause
   exit /b
 )
 
-echo ✅ Token 已获取
-echo 🚀 正在打开浏览器...
+:: 启动服务器
+echo 📡 启动本地 API 服务器...
+start /B node server.cjs
+if %ERRORLEVEL% NEQ 0 (
+  echo ❌ 服务器启动失败
+  pause
+  exit /b
+)
 
-:: 启动浏览器并传入 token
-start "" "index.html?token=%TOKEN%"
+:: 等服务器就绪
+timeout /t 2 /nobreak >nul
+
+:: 打开浏览器
+start "" "http://localhost:3456"
+
 echo ✅ 控制台已启动！
 echo.
-echo 按任意键关闭...
+echo 🌐 浏览器已打开: http://localhost:3456
+echo 📡 按 Ctrl+C 停止服务器
+echo.
+echo 按任意键关闭本窗口（服务器会继续在后台运行）
 pause >nul

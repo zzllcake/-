@@ -234,7 +234,7 @@ body {
 // ============================================================
 const OWNER = 'zzllcake';
 const REPO = '-';
-const API = `https://api.github.com/repos/${OWNER}/${REPO}`;
+const API = `http://localhost:3456/api`;
 
 // ============================================================
 // Token 管理
@@ -243,7 +243,9 @@ function getToken() { return localStorage.getItem('gh_token') || ''; }
 function tokenLog(msg, type = 'info') {
   document.getElementById('tokenLog').innerHTML += `<div class="${type}">${msg}</div>`;
 }
-function showTokenModal() { document.getElementById('tokenModal').classList.add('show'); }
+function showTokenModal() {
+  toast('💡 不用配 Token！双击 启动控制台.bat 即可', 'info');
+}
 function hideTokenModal() { document.getElementById('tokenModal').classList.remove('show'); }
 
 function saveToken() {
@@ -282,29 +284,43 @@ function updateAuthStatus() {
 // GitHub API
 // ============================================================
 async function gh(path, options = {}) {
-  const token = getToken();
-  const headers = { 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' };
-  if (token) headers['Authorization'] = `token ${token}`;
-
-  // 自动处理 method
   const method = options.method || 'GET';
   const body = options.body ? JSON.stringify(options.body) : undefined;
 
   try {
-    const res = await fetch(`${API}${path}`, { method, headers, body });
+    const res = await fetch(`${API}${path}`, { method, body });
     const data = await res.json();
-    if (!res.ok) {
-      const msg = data.message || `HTTP ${res.status}`;
-      if (res.status === 401) toast('Token 无效或已过期，请重新配置', 'error');
-      if (res.status === 403) toast('API 速率限制，请稍后再试', 'error');
-      throw new Error(msg);
-    }
+    if (!res.ok) throw new Error(data.error || data.message || `HTTP ${res.status}`);
     return data;
   } catch (e) {
     if (e.name === 'TypeError' && e.message.includes('fetch')) {
-      throw new Error('网络错误，无法连接到 GitHub');
+      throw new Error('无法连接服务器，请确保已启动 server.js');
     }
     throw e;
+  }
+}
+
+// 检测服务器状态
+async function checkServer() {
+  try {
+    const status = await fetch('http://localhost:3456/api/status').then(r => r.json());
+    const dot = document.getElementById('authDot');
+    const statusEl = document.getElementById('authStatus');
+    if (status.authenticated) {
+      dot.className = 'status-dot on';
+      statusEl.textContent = `✅ ${status.repo}`;
+      document.getElementById('branchLog').innerHTML = '<div class="success">🔗 已连接 GitHub，可以操作</div>';
+    } else {
+      dot.className = 'status-dot off';
+      statusEl.textContent = '❌ 未登录';
+      document.getElementById('branchLog').innerHTML = '<div class="warn">⚠️ 请在终端运行: gh auth login</div>';
+    }
+    return status.authenticated;
+  } catch (e) {
+    document.getElementById('authDot').className = 'status-dot off';
+    document.getElementById('authStatus').textContent = '❌ 无服务器';
+    document.getElementById('branchLog').innerHTML = '<div class="error">❌ 未检测到服务器，请先双击 启动控制台.bat</div>';
+    return false;
   }
 }
 
@@ -539,18 +555,16 @@ function loadAll() {
   loadErrorData();
 }
 
-updateAuthStatus();
-// 从 URL 参数自动加载 Token（用于命令行启动）
-(function() {
-  const params = new URLSearchParams(window.location.search);
-  const tokenFromUrl = params.get('token');
-  if (tokenFromUrl && tokenFromUrl.length > 20) {
-    localStorage.setItem('gh_token', tokenFromUrl);
-    updateAuthStatus();
-    console.log('✅ Token 已从 URL 参数加载');
-  }
-})();
-// 自动加载公开数据（即使没有 token 也能看一部分）
+// 启动
+async function loadAll() {
+  await checkServer();
+  loadPRList();
+  loadChecks();
+  loadErrorData();
+}
+
+checkServer().catch(() => {});
+// 即使服务器没启动也加载本地数据
 loadPRList().catch(() => {});
 loadChecks().catch(() => {});
 loadErrorData();
