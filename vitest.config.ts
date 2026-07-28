@@ -18,6 +18,7 @@ export default defineConfig({
         'src/index.ts',
         'src/error-types.ts',
         'src/error-types-500.ts',
+        'src/error-types-20000.ts',
       ],
       thresholds: {
         statements: 80,

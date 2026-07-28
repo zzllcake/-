@@ -1,3 +1,4 @@
 src/error-types.ts
 src/error-types-500.ts
 scripts/
+src/error-types-20000.ts
