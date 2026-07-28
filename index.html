@@ -540,6 +540,16 @@ function loadAll() {
 }
 
 updateAuthStatus();
+// 从 URL 参数自动加载 Token（用于命令行启动）
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const tokenFromUrl = params.get('token');
+  if (tokenFromUrl && tokenFromUrl.length > 20) {
+    localStorage.setItem('gh_token', tokenFromUrl);
+    updateAuthStatus();
+    console.log('✅ Token 已从 URL 参数加载');
+  }
+})();
 // 自动加载公开数据（即使没有 token 也能看一部分）
 loadPRList().catch(() => {});
 loadChecks().catch(() => {});
