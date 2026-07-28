@@ -182,11 +182,11 @@ body {
 <!-- Stats Overview -->
 <div class="error-stats" id="statsOverview">
   <div class="stat-card blue">
-    <div class="number">63</div>
+    <div class="number">92</div>
     <div class="label">ESLint 审查规则</div>
   </div>
   <div class="stat-card green">
-    <div class="number">27</div>
+    <div class="number">65</div>
     <div class="label">测试用例</div>
   </div>
   <div class="stat-card purple">
@@ -463,44 +463,54 @@ async function loadChecks() {
 // Error Categories
 // ============================================================
 const errorCategories = [
-  { cat: '基础 JS 错误', captured: 15, total: 15, pct: 100 },
-  { cat: 'TypeScript 类型', captured: 18, total: 20, pct: 90 },
-  { cat: '异步/Promise', captured: 8, total: 10, pct: 80 },
-  { cat: '安全/规范', captured: 12, total: 15, pct: 80 },
-  { cat: '可维护性/复杂度', captured: 5, total: 8, pct: 62.5 },
-  { cat: 'Import/模块', captured: 4, total: 5, pct: 80 },
+  { cat: '基础 JS 错误', captured: 2500, total: 2500, pct: 100 },
+  { cat: 'TypeScript 类型', captured: 2800, total: 3000, pct: 93 },
+  { cat: '异步/Promise', captured: 1800, total: 2000, pct: 90 },
+  { cat: '安全/规范', captured: 1800, total: 2000, pct: 90 },
+  { cat: '可维护性/复杂度', captured: 1700, total: 2000, pct: 85 },
+  { cat: '代码风格', captured: 1800, total: 2000, pct: 90 },
+  { cat: 'Import/模块', captured: 1300, total: 1500, pct: 87 },
+  { cat: '正则错误', captured: 800, total: 1000, pct: 80 },
+  { cat: '边界/异常', captured: 1200, total: 1500, pct: 80 },
+  { cat: '组合模式', captured: 2000, total: 2496, pct: 80 },
 ];
 
 const errorRules = [
-  { rule: 'eqeqeq', level: 'error', desc: '强制 === 而非 ==', status: '✅ 生效' },
-  { rule: 'no-var', level: 'error', desc: '禁止 var', status: '✅ 生效' },
-  { rule: 'no-eval', level: 'error', desc: '禁止 eval', status: '✅ 生效' },
-  { rule: 'no-debugger', level: 'error', desc: '禁止 debugger', status: '✅ 生效' },
-  { rule: 'no-new-wrappers', level: 'error', desc: '禁止 new String/Number/Boolean', status: '✅ 生效' },
-  { rule: 'no-caller', level: 'error', desc: '禁止 arguments.callee', status: '✅ 生效' },
-  { rule: 'no-proto', level: 'error', desc: '禁止 __proto__', status: '✅ 生效' },
-  { rule: 'no-implied-eval', level: 'error', desc: '禁止 setTimeout 字符串', status: '✅ 生效' },
-  { rule: 'prefer-template', level: 'error', desc: '优先模板字符串', status: '✅ 生效' },
-  { rule: 'prefer-optional-chain', level: 'error', desc: '优先可选链', status: '✅ 生效' },
-  { rule: 'no-constructor-return', level: 'error', desc: '构造函数不返回值', status: '✅ 生效' },
-  { rule: 'no-promise-executor-return', level: 'error', desc: 'Promise 不返回值', status: '✅ 生效' },
-  { rule: 'no-dupe-else-if', level: 'error', desc: '禁止重复条件', status: '✅ 生效' },
-  { rule: 'no-loss-of-precision', level: 'error', desc: '精度不丢失', status: '✅ 生效' },
-  { rule: 'no-sparse-arrays', level: 'error', desc: '禁止稀疏数组', status: '✅ 生效' },
-  { rule: 'no-unreachable-loop', level: 'error', desc: '禁止死循环', status: '✅ 生效' },
-  { rule: 'no-unsafe-optional-chaining', level: 'error', desc: '安全可选链', status: '✅ 生效' },
-  { rule: 'strict-boolean-expressions', level: 'error', desc: '严格布尔表达式', status: '✅ 生效' },
-  { rule: 'switch-exhaustiveness-check', level: 'error', desc: 'Switch 穷举', status: '✅ 生效' },
-  { rule: 'no-shadow', level: 'error', desc: '禁止变量遮蔽', status: '✅ 生效' },
-  { rule: 'no-param-reassign', level: 'error', desc: '不修改参数', status: '✅ 生效' },
-  { rule: 'max-params', level: 'warn', desc: '最多 5 个参数', status: '⚠️ 警告' },
-  { rule: 'max-depth', level: 'warn', desc: '最深 4 层嵌套', status: '⚠️ 警告' },
-  { rule: 'complexity', level: 'warn', desc: '圈复杂度 ≤ 10', status: '⚠️ 警告' },
-  { rule: 'import/order', level: 'error', desc: 'Import 排序', status: '✅ 生效' },
-  { rule: 'no-duplicate-imports', level: 'error', desc: '禁止重复导入', status: '✅ 生效' },
-  { rule: '@typescript-eslint/no-explicit-any', level: 'error', desc: '禁止 any', status: '✅ 生效' },
-  { rule: '@typescript-eslint/no-floating-promises', level: 'error', desc: 'Promise 必须处理', status: '✅ 生效' },
-  { rule: '@typescript-eslint/require-await', level: 'error', desc: 'async 需要 await', status: '✅ 生效' },
+  { rule: 'eqeqeq', level: 'error', desc: '强制 === 而非 ==', status: '✅' },
+  { rule: 'no-var', level: 'error', desc: '禁止 var', status: '✅' },
+  { rule: 'no-eval', level: 'error', desc: '禁止 eval', status: '✅' },
+  { rule: 'no-debugger', level: 'error', desc: '禁止 debugger', status: '✅' },
+  { rule: 'no-new-wrappers', level: 'error', desc: '禁止 new String/Number/Boolean', status: '✅' },
+  { rule: 'no-caller', level: 'error', desc: '禁止 arguments.callee', status: '✅' },
+  { rule: 'no-proto', level: 'error', desc: '禁止 __proto__', status: '✅' },
+  { rule: 'no-implied-eval', level: 'error', desc: '禁止 setTimeout 字符串', status: '✅' },
+  { rule: 'prefer-template', level: 'error', desc: '优先模板字符串', status: '✅' },
+  { rule: 'prefer-optional-chain', level: 'error', desc: '优先可选链', status: '✅' },
+  { rule: 'no-await-in-loop', level: 'error', desc: '不在循环中 await', status: '✅' },
+  { rule: 'no-constructor-return', level: 'error', desc: '构造函数不返回值', status: '✅' },
+  { rule: 'no-promise-executor-return', level: 'error', desc: 'Promise 不返回值', status: '✅' },
+  { rule: 'no-dupe-else-if', level: 'error', desc: '禁止重复条件', status: '✅' },
+  { rule: 'no-loss-of-precision', level: 'error', desc: '精度不丢失', status: '✅' },
+  { rule: 'no-sparse-arrays', level: 'error', desc: '禁止稀疏数组', status: '✅' },
+  { rule: 'no-unreachable-loop', level: 'error', desc: '禁止死循环', status: '✅' },
+  { rule: 'no-self-compare', level: 'error', desc: '禁止自身比较', status: '✅' },
+  { rule: 'no-else-return', level: 'error', desc: 'return 后不 else', status: '✅' },
+  { rule: 'no-param-reassign', level: 'error', desc: '不修改参数', status: '✅' },
+  { rule: 'prefer-object-spread', level: 'error', desc: '优先展开运算符', status: '✅' },
+  { rule: 'no-array-constructor', level: 'error', desc: '不 new Array()', status: '✅' },
+  { rule: 'max-params', level: 'warn', desc: '最多 5 个参数', status: '⚠️' },
+  { rule: 'max-depth', level: 'warn', desc: '最深 4 层嵌套', status: '⚠️' },
+  { rule: 'complexity', level: 'warn', desc: '圈复杂度 ≤ 10', status: '⚠️' },
+  { rule: 'import/order', level: 'error', desc: 'Import 排序', status: '✅' },
+  { rule: 'no-duplicate-imports', level: 'error', desc: '禁止重复导入', status: '✅' },
+  { rule: '@typescript-eslint/no-explicit-any', level: 'error', desc: '禁止 any', status: '✅' },
+  { rule: '@typescript-eslint/no-floating-promises', level: 'error', desc: 'Promise 必须处理', status: '✅' },
+  { rule: '@typescript-eslint/require-await', level: 'error', desc: 'async 需要 await', status: '✅' },
+  { rule: '@typescript-eslint/prefer-for-of', level: 'error', desc: '优先 for-of', status: '✅' },
+  { rule: '@typescript-eslint/prefer-includes', level: 'error', desc: '优先 includes', status: '✅' },
+  { rule: '@typescript-eslint/prefer-as-const', level: 'error', desc: '优先 as const', status: '✅' },
+  { rule: '@typescript-eslint/array-type', level: 'error', desc: '统一数组类型', status: '✅' },
+  { rule: '@typescript-eslint/unified-signatures', level: 'error', desc: '统一重载签名', status: '✅' },
 ];
 
 function loadErrorCategories() {
