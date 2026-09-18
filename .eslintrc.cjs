@@ -249,7 +249,7 @@ module.exports = {
     },
     {
       // 测试样本/生成文件不参与审查
-      files: ['src/error-types*.ts', 'src/error-test*.ts', 'src/review-samples*.ts'],
+      files: ['src/error-types*.ts', 'src/error-test*.ts'],
       rules: {},
     },
   ],
@@ -262,6 +262,5 @@ module.exports = {
     '*.py',
     'src/error-types*.ts',
     'src/error-test*.ts',
-    'src/review-samples*.ts',
   ],
 };
