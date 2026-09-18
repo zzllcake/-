@@ -3,6 +3,7 @@
  * 双击启动，浏览器直接访问 http://localhost:3456
  */
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
@@ -27,8 +28,11 @@ const AUTH_HEADER = TOKEN ? `token ${TOKEN}` : '';
 // 请求 GitHub API
 function ghApi(path, method = 'GET', body = null) {
   return new Promise((resolve, reject) => {
-    const url = `${GH_API}${path}`;
+    const url = new URL(`${GH_API}${path}`);
     const options = {
+      hostname: url.hostname,
+      port: 443,
+      path: url.pathname + url.search,
       method,
       headers: {
         'User-Agent': 'code-review-console/1.0',
@@ -40,7 +44,7 @@ function ghApi(path, method = 'GET', body = null) {
       options.headers['Content-Type'] = 'application/json';
     }
 
-    const req = http.request(url, options, (res) => {
+    const req = https.request(options, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {

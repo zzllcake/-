@@ -6,37 +6,46 @@ cd /d "%~dp0"
 
 echo.
 echo  ╔═══════════════════════════════════════╗
-echo  ║    🤖 正在启动代码审查控制台           ║
+echo  ║    🤖 代码审查控制台                   ║
+echo  ║                                       ║
+echo  ║    正在启动服务器...                   ║
 echo  ╚═══════════════════════════════════════╝
 echo.
 
 :: 检查 Node.js
 where node >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
-  echo ❌ 未找到 Node.js，请先安装
+  echo ❌ 未找到 Node.js
+  echo 请安装 Node.js: https://nodejs.org/
   pause
   exit /b
 )
 
-:: 启动服务器
-echo 📡 启动本地 API 服务器...
-start /B node server.cjs
+:: 启动服务器（隐藏窗口）
+start /B "" node server.cjs > "%TEMP%\review-server.log" 2>&1
+
+:: 等待服务器启动
+echo 等待服务器就绪...
+timeout /t 3 /nobreak >nul
+
+:: 测试服务器是否启动
+curl -s http://localhost:3456/api/status >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
-  echo ❌ 服务器启动失败
-  pause
-  exit /b
+  echo.
+  echo ⚠️ 服务器启动较慢，再等一会儿...
+  timeout /t 3 /nobreak >nul
 )
-
-:: 等服务器就绪
-timeout /t 2 /nobreak >nul
 
 :: 打开浏览器
+echo 打开浏览器...
 start "" "http://localhost:3456"
 
+echo.
 echo ✅ 控制台已启动！
 echo.
-echo 🌐 浏览器已打开: http://localhost:3456
-echo 📡 按 Ctrl+C 停止服务器
+echo  🌐 浏览器: http://localhost:3456
 echo.
-echo 按任意键关闭本窗口（服务器会继续在后台运行）
+echo  按任意键关闭本窗口（服务器在后台继续运行）
+echo  如需停止服务器，请运行: taskkill /f /im node.exe
+echo.
 pause >nul
