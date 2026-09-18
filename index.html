@@ -198,6 +198,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .modal-foot{display:flex;gap:8px;justify-content:flex-end;padding:13px 18px;border-top:1px solid var(--border)}
 .modal-msg{padding:9px 12px;border-radius:6px;font-size:12px;margin-bottom:14px;display:none}
 
+/* ===== 分页 / 提示 ===== */
+.pagination{display:flex;align-items:center;justify-content:center;gap:6px;padding:14px 0;flex-wrap:wrap}
+.pagination .page-info{font-size:11.5px;color:var(--muted);padding:0 8px}
+.truncate-notice{margin-top:12px;padding:11px 13px;border-radius:6px;font-size:12px;line-height:1.7;
+  background:rgba(210,153,34,.1);border:1px solid rgba(210,153,34,.35);color:var(--yellow)}
+.truncate-notice a{color:var(--accent)}
+.skip-notice{margin-top:10px;padding:11px 13px;border-radius:6px;font-size:12px;line-height:1.7;
+  background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);color:var(--text)}
+.skip-notice code{background:rgba(0,0,0,.35);padding:1px 6px;border-radius:3px;font-size:11px;margin:0 2px;display:inline-block}
+
 /* ===== Footer ===== */
 .footer{flex-shrink:0;display:flex;align-items:center;gap:14px;padding:8px 0;border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
 .footer .spacer{flex:1}
@@ -344,6 +354,12 @@ let currentAnns = [];       // 当前注解
 let branchRuns = [];        // 当前分支的所有运行
 let currentFilter = 'all';
 let sevFilter = 'all';      // 严重程度筛选
+let errorPage = 1;          // 错误列表分页
+let apiTruncated = false;   // GitHub API 是否截断
+let rawAnnCount = 0;        // 原始注解数量（未过滤）
+let realStats = null;       // 来自审查评论的真实统计 {total, errors, warnings}
+let skippedFiles = [];      // 被忽略的文件
+let artifactUrl = '';       // 完整报告 artifact 链接
 let autoTimer = null;
 let loadingBranches = false;
 let userPrefs = JSON.parse(localStorage.getItem('reviewPrefs') || '{}');
@@ -534,6 +550,9 @@ function setFilter(f) {
 async function selectBranch(branch, runId) {
   currentBranch = branch;
   currentRunId = runId;
+  errorPage = 1;  // 重置分页
+  realStats = null;
+  skippedFiles = [];
   renderBranches();
 
   $('emptyState').style.display = 'none';
@@ -564,6 +583,8 @@ async function selectBranch(branch, runId) {
 
     // 收集注解
     currentAnns = [];
+    rawAnnCount = 0;
+    apiTruncated = false;
     const failed = currentJobs.filter(j => j.conclusion === 'failure');
     const toQuery = failed.length > 0 ? failed : currentJobs;
     for (const job of toQuery) {
@@ -571,9 +592,15 @@ async function selectBranch(branch, runId) {
       const cid = job.check_run_url.split('/').pop();
       try {
         const anns = await api(`/check-runs/${cid}/annotations`);
+        // GitHub 限制：每个 check run 最多 50 条
+        if (anns.length >= 50) apiTruncated = true;
+        rawAnnCount += anns.length;
         for (const a of anns) currentAnns.push({ ...a, jobName: job.name });
       } catch (e) {}
     }
+
+    // 获取真实统计（来自审查评论）+ 被忽略文件信息
+    await fetchRealStats();
 
     renderDetailFrame();
     renderErrors();
@@ -583,6 +610,41 @@ async function selectBranch(branch, runId) {
       <button class="btn btn-primary" style="margin-top:9px" onclick="selectBranch('${esc(branch).replace(/'/g, "\\'")}', ${runId})">重试</button>
     </div>`;
   }
+}
+
+// ============================================================
+// 获取真实统计（从审查评论解析，突破 API 注解限制）
+// ============================================================
+async function fetchRealStats() {
+  realStats = null;
+  const b = allBranches.find(x => x.branch === currentBranch);
+  if (!b || !b.pr) return;
+
+  try {
+    const comments = await api(`/issues/${b.pr.number}/comments`);
+    const bot = comments.filter(c => c.user && c.user.type === 'Bot')
+      .sort((a, c) => new Date(c.created_at) - new Date(a.created_at))[0];
+    if (!bot) return;
+
+    // 解析统计表: | ❌ error | **58** | ...
+    const errMatch = bot.body.match(/error\s*\|\s*\*\*(\d+)\*\*/i);
+    const warnMatch = bot.body.match(/warning\s*\|\s*\*\*(\d+)\*\*/i);
+    const totalMatch = bot.body.match(/合计\s*\|\s*\*\*(\d+)\*\*/i);
+
+    if (errMatch && warnMatch) {
+      realStats = {
+        errors: parseInt(errMatch[1]),
+        warnings: parseInt(warnMatch[1]),
+        total: totalMatch ? parseInt(totalMatch[1]) : (parseInt(errMatch[1]) + parseInt(warnMatch[1])),
+      };
+    }
+
+    // 解析解析失败数
+    const parseMatch = bot.body.match(/有\s*\*\*(\d+)\*\*\s*个文件解析失败/);
+    if (parseMatch) {
+      skippedFiles = [`(解析失败 ${parseMatch[1]} 个文件)`];
+    }
+  } catch (e) { /* 忽略 */ }
 }
 
 // ============================================================
@@ -697,6 +759,7 @@ const isNoise = a => NOISE_PATTERNS.some(p => p.test(a.message || ''));
 
 function setSev(s) {
   sevFilter = s;
+  errorPage = 1;  // 重置分页
   if (currentBranch) {
     userPrefs[currentBranch] = userPrefs[currentBranch] || {};
     userPrefs[currentBranch].sev = s;
@@ -766,20 +829,35 @@ function renderErrors() {
 
   const files = Object.entries(byFile).sort((a, b) => b[1].length - a[1].length);
 
+  // ---- 分页处理 ----
+  const PAGE_SIZE = 50;
+  const totalFiltered = filtered.length;
+  const pageStart = (errorPage - 1) * PAGE_SIZE;
+  const pageEnd = pageStart + PAGE_SIZE;
+  let rendered = 0;   // 已渲染条目数
+
   for (const [filePath, anns] of files) {
     const hasErr = anns.some(a => a.annotation_level === 'failure');
     const icon = hasErr ? '🔴' : '🟡';
+
+    // 本文件在当前页中要渲染的条目
+    const pageAnns = anns.filter(a => {
+      const idx = filtered.indexOf(a);
+      return idx >= pageStart && idx < pageEnd;
+    });
+    if (pageAnns.length === 0) continue;
+    rendered += pageAnns.length;
 
     html += `<div class="error-group open">
       <div class="group-header" onclick="this.parentElement.classList.toggle('open')">
         <span class="arrow">▶</span><span>${icon}</span>
         <span class="fname">${esc(filePath)}</span>
-        <span class="count">${anns.length} 个问题</span>
+        <span class="count">${anns.length} 个问题${pageAnns.length < anns.length ? `（本页显示 ${pageAnns.length}）` : ''}</span>
       </div>
       <div class="group-body">`;
 
     const byJob = {};
-    for (const a of anns) (byJob[a.jobName || '未知'] = byJob[a.jobName || '未知'] || []).push(a);
+    for (const a of pageAnns) (byJob[a.jobName || '未知'] = byJob[a.jobName || '未知'] || []).push(a);
 
     for (const [jobName, jobAnns] of Object.entries(byJob)) {
       const order = { failure: 0, warning: 1, notice: 2 };
@@ -803,8 +881,46 @@ function renderErrors() {
     html += '</div></div>';
   }
 
+  // ---- 分页控件 ----
+  const totalPages = Math.ceil(totalFiltered / PAGE_SIZE);
+  if (totalPages > 1) {
+    html += `<div class="pagination">
+      <button class="btn btn-ghost btn-sm" onclick="gotoPage(1)" ${errorPage <= 1 ? 'disabled' : ''}>« 首页</button>
+      <button class="btn btn-ghost btn-sm" onclick="gotoPage(${errorPage - 1})" ${errorPage <= 1 ? 'disabled' : ''}>‹ 上一页</button>
+      <span class="page-info">第 <b>${errorPage}</b> / ${totalPages} 页 · 共 ${totalFiltered} 条</span>
+      <button class="btn btn-ghost btn-sm" onclick="gotoPage(${errorPage + 1})" ${errorPage >= totalPages ? 'disabled' : ''}>下一页 ›</button>
+      <button class="btn btn-ghost btn-sm" onclick="gotoPage(${totalPages})" ${errorPage >= totalPages ? 'disabled' : ''}>末页 »</button>
+    </div>`;
+  } else if (totalFiltered > 0) {
+    html += `<div style="padding:8px 0;font-size:11px;color:var(--muted);text-align:center">共 ${totalFiltered} 条</div>`;
+  }
+
+  // ---- 截断提示（GitHub API 限制）----
+  if (apiTruncated) {
+    html += `<div class="truncate-notice">
+      ⚠️ <b>GitHub API 限制</b>：Check Run 注解最多返回 50 条，当前显示 ${rawAnnCount} 条。
+      ${realStats ? `实际共 <b style="color:var(--red)">${realStats.errors} 个 error</b> / <b style="color:var(--yellow)">${realStats.warnings} 个 warning</b>（来自审查评论统计）。` : ''}
+      <br>📄 完整问题列表请下载 Artifact：<a href="${artifactUrl}" target="_blank">eslint-report</a>
+    </div>`;
+  }
+
+  // ---- 被跳过文件提示 ----
+  if (skippedFiles && skippedFiles.length > 0) {
+    html += `<div class="skip-notice">
+      💡 <b>被跳过的文件</b>（${skippedFiles.length} 个）：${skippedFiles.map(f => `<code>${esc(f)}</code>`).join(', ')}
+      <br><span style="font-size:11px;color:var(--muted)">这些文件被 ignore 配置排除，不参与审查。如果源码被误排除，请检查 .eslintrc.cjs 的 ignorePatterns</span>
+    </div>`;
+  }
+
   html += buildNoiseHtml(noise);
   area.innerHTML = html;
+}
+
+// 分页跳转
+function gotoPage(p) {
+  errorPage = p;
+  renderErrors();
+  $('detailScroll').scrollTo({ top: 300, behavior: 'smooth' });
 }
 
 function buildNoiseHtml(noise) {

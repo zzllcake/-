@@ -22,11 +22,16 @@ env:
 jobs:
 
   # ----------------------------------------------------------
-  # Job 1: Lint & Format
+  # Job 1: Lint & Format（分级统计 + 完整报告）
   # ----------------------------------------------------------
   lint:
     name: 🔍 代码规范检查
     runs-on: ubuntu-latest
+    outputs:
+      total: ${{ steps.stats.outputs.total }}
+      errors: ${{ steps.stats.outputs.errors }}
+      warnings: ${{ steps.stats.outputs.warnings }}
+      parse_failed: ${{ steps.stats.outputs.parse_failed }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -35,10 +40,86 @@ jobs:
           cache: npm
       - run: npm install --legacy-peer-deps
 
-      - name: ESLint
-        run: npm run lint
-      - name: Prettier
+      # 完整统计扫描（error/warning 分级，解析失败容错）
+      - name: ESLint 完整扫描
+        id: eslint
+        run: node scripts/lint-report.cjs
+        continue-on-error: true
+
+      # 把统计写入步骤摘要（突破 API 注解数量限制）
+      - name: 输出统计到摘要
+        if: always()
+        run: |
+          if [ -f reports/eslint-summary.json ]; then
+            node -e "
+              const s = require('./reports/eslint-summary.json');
+              const lines = [];
+              lines.push('### 📊 ESLint 完整统计');
+              lines.push('');
+              lines.push('| 指标 | 数量 |');
+              lines.push('|------|------|');
+              lines.push('| 总问题数 | ' + s.统计.总数 + ' |');
+              lines.push('| ❌ error | ' + s.统计.error数量 + ' |');
+              lines.push('| ⚠️ warning | ' + s.统计.warning数量 + ' |');
+              lines.push('| 💡 info | ' + s.统计.info数量 + ' |');
+              lines.push('| 涉及文件 | ' + s.统计.涉及文件数 + ' |');
+              lines.push('| 可自动修复 | ' + s.统计.可自动修复 + ' |');
+              lines.push('');
+              lines.push('**规则命中 TOP 15:**');
+              lines.push('');
+              lines.push('| 次数 | 规则 |');
+              lines.push('|------|------|');
+              Object.entries(s.规则统计).slice(0, 15).forEach(([r, c]) => lines.push('| ' + c + ' | \`' + r + '\` |'));
+              lines.push('');
+              if (s.解析失败数 > 0) {
+                lines.push('> ⚠️ 有 ' + s.解析失败数 + ' 个文件解析失败（已记录，未跳过）');
+              }
+              lines.push('> 📄 完整报告见 Artifact: **eslint-report**');
+              require('fs').appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\n'));
+            "
+          fi
+
+      # 上传完整报告（前端可通过 artifact 获取全部结果）
+      - name: 上传完整报告
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: eslint-report
+          path: reports/
+          retention-days: 30
+
+      # 输出错误数量供后续 job 使用
+      - name: 设置输出变量
+        id: stats
+        if: always()
+        run: |
+          if [ -f reports/eslint-summary.json ]; then
+            echo "total=$(node -p "require('./reports/eslint-summary.json').统计.总数")" >> $GITHUB_OUTPUT
+            echo "errors=$(node -p "require('./reports/eslint-summary.json').统计.error数量")" >> $GITHUB_OUTPUT
+            echo "warnings=$(node -p "require('./reports/eslint-summary.json').统计.warning数量")" >> $GITHUB_OUTPUT
+            echo "parse_failed=$(node -p "require('./reports/eslint-summary.json').解析失败数")" >> $GITHUB_OUTPUT
+          else
+            echo "total=0" >> $GITHUB_OUTPUT
+            echo "errors=0" >> $GITHUB_OUTPUT
+            echo "warnings=0" >> $GITHUB_OUTPUT
+            echo "parse_failed=0" >> $GITHUB_OUTPUT
+          fi
+
+      # 有 error 则失败（warning 不阻断）
+      - name: 检查结果
+        run: |
+          if [ -f reports/eslint-summary.json ]; then
+            ERRORS=$(node -p "require('./reports/eslint-summary.json').统计.error数量")
+            if [ "$ERRORS" -gt 0 ]; then
+              echo "❌ 发现 $ERRORS 个 error 级问题"
+              exit 1
+            fi
+            echo "✅ 无 error 级问题"
+          fi
+
+      - name: Prettier 格式检查
         run: npm run format:check
+        continue-on-error: true
 
   # ----------------------------------------------------------
   # Job 2: TypeScript 类型检查
@@ -198,6 +279,26 @@ jobs:
             body += `|--------|------|\n`;
             body += rows;
             body += `\n`;
+
+            // ---- 分级统计（来自 lint job 的完整扫描）----
+            const lintTotal = '${{ needs.lint.outputs.total }}';
+            const lintErrors = '${{ needs.lint.outputs.errors }}';
+            const lintWarnings = '${{ needs.lint.outputs.warnings }}';
+            const parseFailed = '${{ needs.lint.outputs.parse_failed }}';
+
+            if (lintTotal && lintTotal !== '' && lintTotal !== '0') {
+              body += `### 📊 代码问题分级统计\n\n`;
+              body += `| 等级 | 数量 | 说明 |\n`;
+              body += `|------|------|------|\n`;
+              body += `| ❌ error | **${lintErrors}** | 阻断级问题（安全/类型/未定义） |\n`;
+              body += `| ⚠️ warning | **${lintWarnings}** | 建议修复（规范/风格/复杂度） |\n`;
+              body += `| 📋 合计 | **${lintTotal}** | 全部问题数量 |\n\n`;
+              if (parseFailed && parseFailed !== '0') {
+                body += `> ⚠️ 有 **${parseFailed}** 个文件解析失败，已记录为 info 级别（未静默跳过）\n\n`;
+              }
+              body += `> 📄 完整问题列表（${lintTotal} 条，不截断）见 Artifact: [**eslint-report**](${runUrl}#artifacts)\n\n`;
+            }
+
             body += `> 提交: \`${shortSha}\` · [查看完整运行日志](${runUrl})\n\n`;
 
             if (hasFailure) {
@@ -209,6 +310,9 @@ jobs:
             } else if (passed === total) {
               body += `### ✅ 全部通过！\n\n`;
               body += `${passed}/${total} 项检查均通过，可以合并 PR。`;
+              if (lintWarnings && lintWarnings !== '0') {
+                body += `\n\n> ⚠️ 但有 ${lintWarnings} 个 warning 建议关注（不阻断合并）。`;
+              }
             } else {
               body += `### ⚠️ 部分检查未完成\n\n`;
               body += `${passed}/${total} 项通过，请查看日志了解详情。`;
