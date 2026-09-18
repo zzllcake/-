@@ -228,6 +228,8 @@ function renderDetail(jobs, annotations, branch, runId) {
     /target Node\.js \d+ but are being forced/i,
     /is deprecated\. The following actions/i,
     /actions\/.*@v\d+/i,
+    /ubuntu-latest label will migrate/i,
+    /runner-images\/issues/i,
   ];
   const isNoise = (a) => {
     const msg = a.message || '';
