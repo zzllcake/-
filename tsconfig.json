@@ -36,5 +36,15 @@
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "vitest.config.ts"],
-  "exclude": ["node_modules", "dist", "coverage", "src/error-types.ts", "src/error-types-500.ts", "src/error-types-20000.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "coverage",
+    "src/error-types.ts",
+    "src/error-types-500.ts",
+    "src/error-types-20000.ts",
+    "src/error-test-500.ts",
+    "src/review-samples-80.ts",
+    "src/samples/**"
+  ]
 }
