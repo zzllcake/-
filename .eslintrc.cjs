@@ -274,6 +274,5 @@ module.exports = {
     'src/error-types*.ts',
     'src/error-test*.ts',
     'src/review-samples*.ts',
-    'src/samples/',
   ],
 };
