@@ -5,120 +5,254 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🤖 代码审查控制台</title>
 <style>
-:root{--bg:#0d1117;--card:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;--green:#3fb950;--red:#f85149;--yellow:#d29922;--radius:8px}
+:root{--bg:#0d1117;--card:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;--green:#3fb950;--red:#f85149;--yellow:#d29922;--purple:#bc8cff;--radius:8px}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);padding:16px;height:100vh;overflow:hidden}
-.container{max-width:1600px;margin:0 auto;display:flex;flex-direction:column;height:100%}
-.header{display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--border);margin-bottom:14px;flex-shrink:0}
-.header h1{font-size:20px;font-weight:600}
-.header .status{display:flex;align-items:center;gap:6px;font-size:13px;padding:5px 12px;border:1px solid var(--border);border-radius:6px;margin-left:auto}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);padding:14px;height:100vh;overflow:hidden}
+.container{max-width:1700px;margin:0 auto;display:flex;flex-direction:column;height:100%;gap:12px}
+
+/* ===== Header ===== */
+.header{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--border);flex-shrink:0}
+.header h1{font-size:19px;font-weight:600;white-space:nowrap}
+.status{display:flex;align-items:center;gap:6px;font-size:12px;padding:5px 11px;border:1px solid var(--border);border-radius:6px}
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-.dot.on{background:var(--green)}
+.dot.on{background:var(--green);box-shadow:0 0 6px var(--green)}
 .dot.off{background:var(--red)}
-.btn{padding:6px 14px;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer}
-.btn:hover{opacity:.85}
+.header .right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.last-refresh{font-size:11px;color:var(--muted)}
+.btn{padding:6px 13px;border:none;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:hover:not(:disabled){opacity:.85}
+.btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-primary{background:var(--accent);color:#000}
-.btn-sm{padding:4px 10px;font-size:12px;background:var(--border);color:var(--text);border:none;border-radius:4px;cursor:pointer}
+.btn-ghost{background:var(--border);color:var(--text)}
+.toggle{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;user-select:none}
+.toggle input{cursor:pointer}
 
-.grid{display:grid;grid-template-columns:340px 1fr;gap:14px;flex:1;min-height:0}
-@media(max-width:900px){.grid{grid-template-columns:1fr}}
+/* ===== Stats Bar ===== */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;flex-shrink:0}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;position:relative;overflow:hidden}
+.stat .v{font-size:22px;font-weight:700;line-height:1.2}
+.stat .k{font-size:11px;color:var(--muted);margin-top:3px}
+.stat.total .v{color:var(--accent)}
+.stat.fail .v{color:var(--red)}
+.stat.ok .v{color:var(--green)}
+.stat.pending .v{color:var(--yellow)}
+.stat.rate .v{color:var(--purple)}
+.stat .bar{height:4px;background:var(--bg);border-radius:2px;margin-top:8px;overflow:hidden;display:flex}
+.stat .bar i{display:block;height:100%}
+.stat .bar .b-ok{background:var(--green)}
+.stat .bar .b-fail{background:var(--red)}
+.stat .bar .b-pending{background:var(--yellow)}
 
-.sidebar{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;overflow-y:auto}
-.sidebar h2{font-size:14px;font-weight:600;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-.form-row{display:flex;gap:6px;margin-bottom:10px}
-.form-row input{flex:1;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;min-width:0}
+/* ===== Layout ===== */
+.grid{display:grid;grid-template-columns:360px 1fr;gap:12px;flex:1;min-height:0}
+@media(max-width:1000px){.grid{grid-template-columns:1fr}}
+
+/* ===== Sidebar ===== */
+.sidebar{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;min-height:0}
+.sidebar-top{padding:11px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.form-row{display:flex;gap:5px;margin-bottom:9px}
+.form-row input{flex:1;padding:6px 9px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;min-width:0}
 .form-row input:focus{outline:none;border-color:var(--accent)}
-.branch-item{padding:10px;border:1px solid var(--border);border-radius:6px;margin-bottom:6px;cursor:pointer;font-size:13px;transition:all .15s}
+.search-row{position:relative;margin-bottom:9px}
+.search-row input{width:100%;padding:7px 10px 7px 30px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px}
+.search-row input:focus{outline:none;border-color:var(--accent)}
+.search-row .ico{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px}
+.filters{display:flex;gap:5px;align-items:center}
+.filter-tab{padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;background:var(--bg);border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+.filter-tab:hover{border-color:var(--accent)}
+.filter-tab.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+.filter-tab .n{opacity:.75;margin-left:3px}
+.sort-select{margin-left:auto;padding:4px 7px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;cursor:pointer}
+.sort-select:focus{outline:none;border-color:var(--accent)}
+
+.branch-list{flex:1;overflow-y:auto;padding:8px}
+.branch-item{padding:9px 10px;border:1px solid var(--border);border-radius:6px;margin-bottom:6px;cursor:pointer;transition:all .15s;position:relative}
 .branch-item:hover{background:rgba(88,166,255,.08);border-color:var(--accent)}
-.branch-item.active{background:rgba(88,166,255,.15);border-color:var(--accent)}
-.branch-item .name{font-weight:500;margin-bottom:4px;word-break:break-all;font-size:12px}
-.branch-item .meta{display:flex;gap:8px;font-size:11px;color:var(--muted);flex-wrap:wrap}
-.tag{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;display:inline-block;margin-top:5px}
-.tag.err{background:rgba(248,81,73,.2);color:var(--red)}
-.tag.warn{background:rgba(210,153,34,.2);color:var(--yellow)}
-.tag.ok{background:rgba(63,185,80,.2);color:var(--green)}
-.tag.info{background:rgba(88,166,255,.2);color:var(--accent)}
+.branch-item.active{background:rgba(88,166,255,.15);border-color:var(--accent);border-left:3px solid var(--accent)}
+.branch-item .name{font-weight:500;margin-bottom:4px;word-break:break-all;font-size:12px;padding-right:60px}
+.branch-item .meta{display:flex;gap:7px;font-size:10px;color:var(--muted);flex-wrap:wrap}
+.branch-item .badge{position:absolute;top:9px;right:9px;padding:2px 7px;border-radius:9px;font-size:10px;font-weight:600;white-space:nowrap}
+.badge.ok{background:rgba(63,185,80,.2);color:var(--green)}
+.badge.err{background:rgba(248,81,73,.2);color:var(--red)}
+.badge.pending{background:rgba(210,153,34,.2);color:var(--yellow)}
+.badge.cancel{background:rgba(139,148,158,.2);color:var(--muted)}
 
-.main{display:flex;flex-direction:column;min-height:0}
-.toolbar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;flex-shrink:0}
+/* ===== Main ===== */
+.main{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;min-height:0}
+.toolbar{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
 .toolbar .title{font-size:14px;font-weight:600;flex:1;word-break:break-all}
-.content{flex:1;overflow-y:auto;min-height:0}
+.toolbar .sub{font-size:11px;color:var(--muted);font-weight:400;margin-left:8px}
+.toolbar .actions{display:flex;gap:6px}
+.content{flex:1;overflow-y:auto;padding:12px;min-height:0}
 
-.summary-bar{display:flex;gap:14px;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;flex-wrap:wrap}
-.sum-item{display:flex;align-items:center;gap:6px;font-size:13px}
-.sum-item .num{font-weight:700;font-size:17px}
-.sum-item.err .num{color:var(--red)}
-.sum-item.warn .num{color:var(--yellow)}
-.sum-item.ok .num{color:var(--green)}
-.sum-item.info .num{color:var(--accent)}
+/* ===== Summary ===== */
+.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:12px}
+.sum{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;display:flex;align-items:center;gap:9px}
+.sum .ico{font-size:17px}
+.sum .n{font-size:18px;font-weight:700;line-height:1}
+.sum .l{font-size:10px;color:var(--muted);margin-top:2px}
+.sum.err .n{color:var(--red)}
+.sum.warn .n{color:var(--yellow)}
+.sum.info .n{color:var(--accent)}
+.sum.jobs .n{color:var(--purple)}
 
-.error-group{margin-bottom:10px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.group-header{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--card);cursor:pointer;font-size:13px;font-weight:500;user-select:none}
+.jobs-bar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.job-chip{padding:4px 10px;border:1px solid var(--border);border-radius:12px;font-size:11px;cursor:default}
+.job-chip.ok{color:var(--green);border-color:rgba(63,185,80,.4)}
+.job-chip.err{color:var(--red);border-color:rgba(248,81,73,.4)}
+.job-chip.pending{color:var(--yellow)}
+
+/* ===== Error groups ===== */
+.error-group{margin-bottom:9px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.group-header{display:flex;align-items:center;gap:8px;padding:10px 13px;background:var(--bg);cursor:pointer;font-size:13px;font-weight:500;user-select:none}
 .group-header:hover{background:rgba(88,166,255,.06)}
-.group-header .fname{flex:1;font-family:monospace;font-size:12px;word-break:break-all}
-.group-header .count{font-size:12px;color:var(--muted);white-space:nowrap}
-.group-header .arrow{transition:transform .2s;color:var(--muted);font-size:11px}
+.group-header .arrow{transition:transform .2s;color:var(--muted);font-size:10px;flex-shrink:0}
 .error-group.open .arrow{transform:rotate(90deg)}
-.group-body{display:none;background:var(--bg)}
+.group-header .fname{flex:1;font-family:monospace;font-size:12px;word-break:break-all}
+.group-header .count{font-size:11px;color:var(--muted);white-space:nowrap;padding:2px 8px;background:var(--card);border-radius:10px}
+.group-body{display:none}
 .error-group.open .group-body{display:block}
-.job-label{padding:5px 14px;font-size:11px;color:var(--muted);background:rgba(0,0,0,.25);border-top:1px solid var(--border)}
-.error-item{padding:9px 14px;border-top:1px solid var(--border);font-size:13px;display:flex;gap:9px;align-items:flex-start}
+.job-label{padding:5px 13px;font-size:10px;color:var(--muted);background:rgba(0,0,0,.3);border-top:1px solid var(--border);text-transform:uppercase;letter-spacing:.5px}
+.error-item{padding:9px 13px;border-top:1px solid var(--border);font-size:12.5px;display:flex;gap:9px;align-items:flex-start}
 .error-item:hover{background:rgba(88,166,255,.04)}
-.error-item .icon{flex-shrink:0;font-size:12px;margin-top:1px}
+.error-item .icon{flex-shrink:0;margin-top:1px}
 .error-item .info{flex:1;min-width:0}
-.error-item .loc{font-family:monospace;font-size:12px;margin-bottom:3px}
+.error-item .loc{font-family:monospace;font-size:11.5px;margin-bottom:3px}
 .error-item .loc a{color:var(--accent);text-decoration:none;word-break:break-all}
 .error-item .loc a:hover{text-decoration:underline}
-.error-item .msg{color:var(--text);line-height:1.45;word-break:break-word}
-.error-item .rule{font-size:11px;color:var(--muted);margin-top:3px;font-family:monospace}
+.error-item .msg{color:var(--text);line-height:1.5;word-break:break-word}
+.error-item .rule{font-size:10.5px;color:var(--muted);margin-top:3px;font-family:monospace;background:var(--card);display:inline-block;padding:1px 6px;border-radius:4px}
 
-.empty{text-align:center;padding:50px 20px;color:var(--muted);font-size:14px}
-.loading{text-align:center;padding:30px;color:var(--muted);font-size:13px}
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
+/* ===== States ===== */
+.empty{text-align:center;padding:50px 20px;color:var(--muted);font-size:13px;line-height:1.9}
+.loading{text-align:center;padding:28px;color:var(--muted);font-size:12px}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 0 0;flex-shrink:0}
+.skeleton{background:linear-gradient(90deg,var(--border) 25%,rgba(48,54,61,.4) 50%,var(--border) 75%);background-size:200% 100%;animation:sk 1.4s infinite;border-radius:6px}
+@keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.sk-item{height:42px;margin-bottom:7px}
+.sk-line{height:13px;margin-bottom:8px}
+.error-box{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:6px;padding:16px;margin:10px;font-size:12.5px;line-height:1.7}
+.error-box .t{color:var(--red);font-weight:600;margin-bottom:6px}
+.error-box button{margin-top:9px}
+
+/* ===== Log ===== */
+#actionLog{display:none;margin:0 12px 10px;padding:10px 11px;border-radius:6px;font-size:11.5px;line-height:1.7;word-break:break-all}
+#actionLog code{background:rgba(0,0,0,.35);padding:1px 5px;border-radius:3px;font-size:10.5px}
+
+/* ===== Footer ===== */
+.footer{flex-shrink:0;display:flex;align-items:center;gap:14px;padding:8px 0;border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
+.footer .spacer{flex:1}
+
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:5px}
+::-webkit-scrollbar-thumb:hover{background:#484f58}
 </style>
 </head>
 <body>
 <div class="container">
 
+<!-- Header -->
 <div class="header">
   <h1>🤖 代码审查控制台</h1>
   <span class="status"><span class="dot off" id="statusDot"></span><span id="statusText">连接中...</span></span>
-  <button class="btn btn-sm" onclick="loadAll()">🔄 刷新</button>
+  <div class="right">
+    <span class="last-refresh" id="lastRefresh">尚未刷新</span>
+    <button class="btn btn-ghost" id="btnRefresh" onclick="refreshAll()">🔄 刷新</button>
+  </div>
 </div>
 
+<!-- Stats Overview -->
+<div class="stats" id="statsBar">
+  <div class="stat total"><div class="v" id="stTotal">-</div><div class="k">总分支数</div></div>
+  <div class="stat fail"><div class="v" id="stFail">-</div><div class="k">失败分支</div></div>
+  <div class="stat ok"><div class="v" id="stOk">-</div><div class="k">通过分支</div></div>
+  <div class="stat pending"><div class="v" id="stPending">-</div><div class="k">运行中</div></div>
+  <div class="stat rate">
+    <div class="v" id="stRate">-</div><div class="k">通过率</div>
+    <div class="bar" id="stBar"><i class="b-ok" style="width:0"></i><i class="b-fail" style="width:0"></i><i class="b-pending" style="width:0"></i></div>
+  </div>
+  <div class="stat"><div class="v" style="font-size:15px;padding-top:5px" id="stLastRun">-</div><div class="k">最近一次运行</div></div>
+</div>
+
+<!-- Main Grid -->
 <div class="grid">
+  <!-- Sidebar -->
   <div class="sidebar">
-    <h2>📂 分支 / 运行记录</h2>
-    <div class="form-row">
-      <input id="branchInput" placeholder="新分支名" value="fix/issue">
-      <button class="btn btn-primary btn-sm" id="btnBranch" onclick="createBranch()">建分支</button>
-      <button class="btn btn-primary btn-sm" id="btnPR" onclick="createPR()">建PR</button>
+    <div class="sidebar-top">
+      <div class="form-row">
+        <input id="branchInput" placeholder="新分支名，如 fix/login-bug" value="fix/issue">
+        <button class="btn btn-primary" id="btnBranch" onclick="createBranch()">建分支</button>
+        <button class="btn btn-primary" id="btnPR" onclick="createPR()">建PR</button>
+      </div>
+      <div id="actionLog"></div>
+      <div class="search-row">
+        <span class="ico">🔍</span>
+        <input id="searchInput" placeholder="搜索分支名..." oninput="renderBranches()">
+      </div>
+      <div class="filters">
+        <div class="filter-tab active" data-filter="all" onclick="setFilter('all')">全部<span class="n" id="nAll"></span></div>
+        <div class="filter-tab" data-filter="failure" onclick="setFilter('failure')">失败<span class="n" id="nFail"></span></div>
+        <div class="filter-tab" data-filter="success" onclick="setFilter('success')">通过<span class="n" id="nOk"></span></div>
+        <select class="sort-select" id="sortSelect" onchange="renderBranches()">
+          <option value="time">最近运行</option>
+          <option value="count">运行次数</option>
+          <option value="name">分支名</option>
+        </select>
+      </div>
     </div>
-    <div id="actionLog" style="display:none;margin-bottom:10px;padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.5;word-break:break-all"></div>
-    <div id="branchList"><div class="loading"><span class="spinner"></span>加载中...</div></div>
+    <div class="branch-list" id="branchList">
+      <div class="skeleton sk-item"></div>
+      <div class="skeleton sk-item"></div>
+      <div class="skeleton sk-item"></div>
+    </div>
   </div>
 
+  <!-- Main -->
   <div class="main">
     <div class="toolbar">
-      <span class="title" id="detailTitle">👈 点击左侧分支查看审查错误</span>
-      <span style="font-size:11px;color:var(--muted);cursor:pointer" onclick="reloadDetail()">🔄 重新加载</span>
+      <span class="title" id="detailTitle">👈 从左侧选择一个分支</span>
+      <span id="detailSub" class="sub"></span>
+      <div class="actions">
+        <button class="btn btn-ghost" id="btnReloadDetail" onclick="reloadDetail()" style="display:none">🔄 重新加载</button>
+      </div>
     </div>
     <div class="content" id="detailContent">
-      <div class="empty">选择左侧任意分支，查看该分支的代码审查错误详情<br><br>
-      <span style="font-size:12px">包含：错误位置 · 错误类型 · 所属规则 · 分类统计</span></div>
+      <div class="empty">
+        👈 从左侧选择一个分支查看审查结果<br>
+        <span style="font-size:11.5px">显示：错误位置 · 错误类型 · 所属规则 · 分类统计</span>
+      </div>
     </div>
   </div>
 </div>
 
-<div class="footer">每次提交推送后点「🔄 刷新」获取最新审查结果</div>
+<!-- Footer -->
+<div class="footer">
+  <span id="footerInfo">就绪</span>
+  <span class="spacer"></span>
+  <label class="toggle"><input type="checkbox" id="autoRefresh" checked onchange="toggleAuto()"> 自动刷新（30秒）</label>
+</div>
 </div>
 
 <script>
+// ============================================================
+// 全局状态
+// ============================================================
+let allBranches = [];       // 所有分支数据
+let currentBranch = null;   // 当前选中
 let currentRunId = null;
-let currentBranch = null;
+let currentFilter = 'all';
+let autoTimer = null;
+let lastRefreshTime = null;
+let loadingBranches = false;
+let loadingDetail = false;
 
+const $ = id => document.getElementById(id);
+
+// ============================================================
+// API
+// ============================================================
 async function api(path, opts) {
   const res = await fetch(`http://localhost:3456/api${path}`, opts);
   const data = await res.json();
@@ -126,15 +260,108 @@ async function api(path, opts) {
   return data;
 }
 
+// ============================================================
+// 工具
+// ============================================================
+function timeAgo(dateStr) {
+  if (!dateStr) return '未知';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return '刚刚';
+  if (min < 60) return `${min}分钟前`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}小时前`;
+  const d = Math.floor(hr / 24);
+  if (d < 30) return `${d}天前`;
+  return new Date(dateStr).toLocaleDateString('zh-CN');
+}
+
+function fmtTime(date) {
+  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function showLog(msg, type = 'info') {
+  const el = $('actionLog');
+  const colors = { info: 'var(--accent)', ok: 'var(--green)', err: 'var(--red)', warn: 'var(--yellow)' };
+  const bgs = { info: 'rgba(88,166,255,.12)', ok: 'rgba(63,185,80,.12)', err: 'rgba(248,81,73,.12)', warn: 'rgba(210,153,34,.12)' };
+  el.style.display = 'block';
+  el.style.color = colors[type];
+  el.style.background = bgs[type];
+  el.innerHTML = msg;
+}
+
+function setBtnLoading(id, loading, text) {
+  const b = $(id);
+  if (!b) return;
+  b.disabled = loading;
+  b.textContent = loading ? '⏳' : text;
+}
+
+// ============================================================
+// 统计概览
+// ============================================================
+function renderStats() {
+  const total = allBranches.length;
+  const fail = allBranches.filter(b => b.conclusion === 'failure').length;
+  const ok = allBranches.filter(b => b.conclusion === 'success').length;
+  const pending = total - fail - ok;
+  const rate = (ok + fail) > 0 ? Math.round(ok / (ok + fail) * 100) : 0;
+
+  $('stTotal').textContent = total;
+  $('stFail').textContent = fail;
+  $('stOk').textContent = ok;
+  $('stPending').textContent = pending;
+  $('stRate').textContent = rate + '%';
+
+  const okPct = total ? ok / total * 100 : 0;
+  const failPct = total ? fail / total * 100 : 0;
+  const pendPct = total ? pending / total * 100 : 0;
+  const bar = $('stBar');
+  bar.children[0].style.width = okPct + '%';
+  bar.children[1].style.width = failPct + '%';
+  bar.children[2].style.width = pendPct + '%';
+
+  // 最近一次运行
+  const latest = allBranches
+    .filter(b => b.lastRun)
+    .sort((a, b) => new Date(b.lastRun.created_at) - new Date(a.lastRun.created_at))[0];
+  $('stLastRun').textContent = latest ? timeAgo(latest.lastRun.created_at) : '无';
+
+  // 筛选器计数
+  $('nAll').textContent = total ? ` ${total}` : '';
+  $('nFail').textContent = fail ? ` ${fail}` : '';
+  $('nOk').textContent = ok ? ` ${ok}` : '';
+}
+
+function renderFooter(msg) {
+  $('footerInfo').textContent = msg;
+}
+
+// ============================================================
+// 加载分支列表
+// ============================================================
 async function loadBranches() {
-  const list = document.getElementById('branchList');
+  if (loadingBranches) return;
+  loadingBranches = true;
+  const list = $('branchList');
+
+  // 骨架屏（仅首次）
+  if (allBranches.length === 0) {
+    list.innerHTML = '<div class="skeleton sk-item"></div><div class="skeleton sk-item"></div><div class="skeleton sk-item"></div>';
+  }
+
   try {
     const [runsData, prs] = await Promise.all([
-      api('/actions/runs?per_page=30'),
-      api('/pulls?state=all&per_page=30').catch(() => [])
+      api('/actions/runs?per_page=50'),
+      api('/pulls?state=all&per_page=50').catch(() => [])
     ]);
     const runs = runsData.workflow_runs || [];
 
+    // 按分支聚合
     const map = new Map();
     for (const run of runs) {
       const b = run.head_branch || 'unknown';
@@ -147,68 +374,164 @@ async function loadBranches() {
       map.get(b).pr = pr;
     }
 
-    if (map.size === 0) {
-      list.innerHTML = '<div class="empty">暂无运行记录</div>';
-      return;
-    }
+    // 整理数据
+    allBranches = [...map.values()].map(d => {
+      const lastRun = d.runs[0] || null;
+      return {
+        branch: d.branch,
+        runs: d.runs,
+        runCount: d.runs.length,
+        lastRun,
+        pr: d.pr,
+        conclusion: lastRun ? lastRun.conclusion : null
+      };
+    });
 
-    let html = '';
-    for (const [branch, d] of map) {
-      const last = d.runs[0];
-      const c = last?.conclusion;
-      let tag = '<span class="tag info">运行中</span>';
-      if (c === 'success') tag = '<span class="tag ok">✅ 通过</span>';
-      else if (c === 'failure') tag = '<span class="tag err">❌ 失败</span>';
-      else if (c === 'cancelled') tag = '<span class="tag warn">⏹ 已取消</span>';
-
-      const active = (branch === currentBranch) ? ' active' : '';
-      const prLabel = d.pr ? `#${d.pr.number} ` : '';
-      const dateStr = last ? new Date(last.created_at).toLocaleString('zh-CN', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
-
-      html += `<div class="branch-item${active}" onclick="selectBranch('${branch.replace(/'/g,"\\'")}', ${last?.id || 0})">
-        <div class="name">${prLabel}${branch}</div>
-        <div class="meta"><span>${dateStr}</span><span>${d.runs.length}次运行</span></div>
-        ${tag}
-      </div>`;
-    }
-    list.innerHTML = html;
+    renderStats();
+    renderBranches();
+    renderFooter(`已加载 ${allBranches.length} 个分支 · ${new Date().toLocaleTimeString('zh-CN')}`);
   } catch (e) {
-    list.innerHTML = `<div class="empty">❌ ${e.message}</div>`;
+    list.innerHTML = `<div class="error-box">
+      <div class="t">❌ 加载失败</div>
+      ${esc(e.message)}<br>
+      <span style="color:var(--muted)">请确认服务器已启动（双击 启动控制台.bat）</span><br>
+      <button class="btn btn-primary" onclick="loadBranches()">重试</button>
+    </div>`;
+    renderFooter('❌ 加载失败');
+  } finally {
+    loadingBranches = false;
   }
 }
 
-async function selectBranch(branch, runId) {
-  currentBranch = branch;
-  currentRunId = runId;
-  document.getElementById('detailTitle').textContent = `📋 ${branch}`;
-  document.getElementById('detailContent').innerHTML = '<div class="loading"><span class="spinner"></span>正在获取审查错误...</div>';
-  loadBranches();
+// ============================================================
+// 渲染分支列表（带搜索/筛选/排序）
+// ============================================================
+function renderBranches() {
+  const list = $('branchList');
+  const kw = ($('searchInput').value || '').trim().toLowerCase();
+  const sort = $('sortSelect').value;
 
-  if (!runId) {
-    document.getElementById('detailContent').innerHTML = '<div class="empty">该分支暂无运行记录</div>';
+  let items = allBranches.slice();
+
+  // 搜索
+  if (kw) {
+    items = items.filter(b =>
+      b.branch.toLowerCase().includes(kw) ||
+      (b.pr && String(b.pr.number).includes(kw))
+    );
+  }
+
+  // 筛选
+  if (currentFilter === 'failure') items = items.filter(b => b.conclusion === 'failure');
+  else if (currentFilter === 'success') items = items.filter(b => b.conclusion === 'success');
+  else if (currentFilter === 'pending') items = items.filter(b => !b.conclusion || b.conclusion === 'cancelled');
+
+  // 排序
+  if (sort === 'time') {
+    items.sort((a, b) => new Date(b.lastRun?.created_at || 0) - new Date(a.lastRun?.created_at || 0));
+  } else if (sort === 'count') {
+    items.sort((a, b) => b.runCount - a.runCount);
+  } else if (sort === 'name') {
+    items.sort((a, b) => a.branch.localeCompare(b.branch));
+  }
+
+  if (allBranches.length === 0) return; // 骨架屏还在
+
+  if (items.length === 0) {
+    list.innerHTML = `<div class="empty" style="padding:30px 15px">
+      ${kw ? `没有匹配「${esc(kw)}」的分支` : '该分类下没有分支'}
+    </div>`;
     return;
   }
 
+  let html = '';
+  for (const b of items) {
+    const c = b.conclusion;
+    let badgeCls = 'pending', badgeTxt = '运行中', icon = '⏳';
+    if (c === 'success') { badgeCls = 'ok'; badgeTxt = '✅ 通过'; icon = '✅'; }
+    else if (c === 'failure') { badgeCls = 'err'; badgeTxt = '❌ 失败'; icon = '❌'; }
+    else if (c === 'cancelled') { badgeCls = 'cancel'; badgeTxt = '⏹ 取消'; icon = '⏹'; }
+
+    const active = b.branch === currentBranch ? ' active' : '';
+    const prLabel = b.pr ? `<span style="color:var(--purple)">#${b.pr.number}</span> ` : '';
+    const when = b.lastRun ? timeAgo(b.lastRun.created_at) : '';
+
+    html += `<div class="branch-item${active}" onclick="selectBranch('${esc(b.branch).replace(/'/g, "\\'")}', ${b.lastRun?.id || 0})" title="${esc(b.branch)}">
+      <span class="badge ${badgeCls}">${badgeTxt}</span>
+      <div class="name">${prLabel}${esc(b.branch)}</div>
+      <div class="meta">
+        <span>🕐 ${when}</span>
+        <span>🔁 ${b.runCount}次</span>
+      </div>
+    </div>`;
+  }
+  list.innerHTML = html;
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.filter === f);
+  });
+  renderBranches();
+}
+
+// ============================================================
+// 选择分支 → 加载错误详情
+// ============================================================
+async function selectBranch(branch, runId) {
+  currentBranch = branch;
+  currentRunId = runId;
+  $('detailTitle').textContent = `📋 ${branch}`;
+  $('detailSub').textContent = '';
+  $('btnReloadDetail').style.display = 'inline-block';
+  renderBranches();
+
+  const content = $('detailContent');
+
+  if (!runId) {
+    content.innerHTML = '<div class="empty">该分支暂无可用的运行记录<br><span style="font-size:11.5px">推送代码后自动触发审查</span></div>';
+    return;
+  }
+
+  // 骨架屏
+  content.innerHTML = `<div class="skeleton sk-line" style="width:70%"></div>
+    <div class="skeleton sk-line" style="width:45%"></div>
+    <div style="margin-top:18px"></div>
+    <div class="skeleton sk-item"></div><div class="skeleton sk-item"></div>
+    <div class="loading" style="margin-top:10px"><span class="spinner"></span>正在获取审查错误...</div>`;
+
+  loadingDetail = true;
   try {
     const jobsData = await api(`/actions/runs/${runId}/jobs`);
     const jobs = jobsData.jobs || [];
 
+    // 收集注解
     let annotations = [];
-    for (const job of jobs) {
+    const failedJobs = jobs.filter(j => j.conclusion === 'failure');
+    const toQuery = failedJobs.length > 0 ? failedJobs : jobs;
+
+    for (const job of toQuery) {
       if (!job.check_run_url) continue;
       const cid = job.check_run_url.split('/').pop();
       try {
         const anns = await api(`/check-runs/${cid}/annotations`);
         for (const a of anns) {
-          annotations.push({ ...a, jobName: job.name, jobConclusion: job.conclusion });
+          annotations.push({ ...a, jobName: job.name });
         }
-      } catch (e) { }
+      } catch (e) { /* 忽略单个 job 失败 */ }
     }
 
     renderDetail(jobs, annotations, branch, runId);
   } catch (e) {
-    document.getElementById('detailContent').innerHTML =
-      `<div class="empty">❌ ${e.message}<br><br><button class="btn btn-sm" onclick="selectBranch('${branch}',${runId})">重试</button></div>`;
+    content.innerHTML = `<div class="error-box">
+      <div class="t">❌ 加载审查结果失败</div>
+      ${esc(e.message)}<br>
+      <span style="color:var(--muted);font-size:11.5px">可能是网络问题，稍后重试</span><br>
+      <button class="btn btn-primary" onclick="selectBranch('${esc(branch).replace(/'/g, "\\'")}', ${runId})">重试</button>
+    </div>`;
+  } finally {
+    loadingDetail = false;
   }
 }
 
@@ -216,111 +539,118 @@ function reloadDetail() {
   if (currentBranch) selectBranch(currentBranch, currentRunId);
 }
 
+// ============================================================
+// 渲染详情
+// ============================================================
+const NOISE_PATTERNS = [
+  /Node\.js \d+ is deprecated/i,
+  /CodeQL Action v\d+ will be deprecated/i,
+  /target Node\.js \d+ but are being forced/i,
+  /is deprecated\. The following actions/i,
+  /actions\/.*@v\d+/i,
+  /ubuntu-latest label will migrate/i,
+  /runner-images\/issues/i,
+];
+const isNoise = a => NOISE_PATTERNS.some(p => p.test(a.message || ''));
+
 function renderDetail(jobs, annotations, branch, runId) {
-  const c = document.getElementById('detailContent');
+  const content = $('detailContent');
 
-  // ============================================================
-  // 过滤：工作流/依赖相关的噪音警告（不是代码问题）
-  // ============================================================
-  const NOISE_PATTERNS = [
-    /Node\.js \d+ is deprecated/i,
-    /CodeQL Action v\d+ will be deprecated/i,
-    /target Node\.js \d+ but are being forced/i,
-    /is deprecated\. The following actions/i,
-    /actions\/.*@v\d+/i,
-    /ubuntu-latest label will migrate/i,
-    /runner-images\/issues/i,
-  ];
-  const isNoise = (a) => {
-    const msg = a.message || '';
-    return NOISE_PATTERNS.some(p => p.test(msg));
-  };
+  const code = annotations.filter(a => !isNoise(a));
+  const noise = annotations.filter(isNoise);
 
-  const codeAnns = annotations.filter(a => !isNoise(a));
-  const noiseAnns = annotations.filter(a => isNoise(a));
+  const errs = code.filter(a => a.annotation_level === 'failure');
+  const warns = code.filter(a => a.annotation_level === 'warning');
+  const infos = code.filter(a => a.annotation_level === 'notice');
+  const jobsOk = jobs.filter(j => j.conclusion === 'success').length;
+  const jobsFail = jobs.filter(j => j.conclusion === 'failure').length;
 
-  const errs = codeAnns.filter(a => a.annotation_level === 'failure');
-  const warns = codeAnns.filter(a => a.annotation_level === 'warning');
-  const notices = codeAnns.filter(a => a.annotation_level === 'notice');
-  const passed = jobs.filter(j => j.conclusion === 'success').length;
-  const failed = jobs.filter(j => j.conclusion === 'failure').length;
+  $('detailSub').textContent = `${jobsOk}/${jobs.length} Job 通过`;
 
-  let html = `<div class="summary-bar">
-    <div class="sum-item err"><span class="num">${errs.length}</span>错误</div>
-    <div class="sum-item warn"><span class="num">${warns.length}</span>警告</div>
-    <div class="sum-item info"><span class="num">${notices.length}</span>提示</div>
-    <div class="sum-item ok"><span class="num">${passed}/${jobs.length}</span>Job 通过</div>
-    ${failed ? `<div class="sum-item err"><span class="num">${failed}</span>Job 失败</div>` : ''}
+  let html = '';
+
+  // 统计卡片
+  html += `<div class="summary-bar">
+    <div class="sum err"><span class="ico">❌</span><div><div class="n">${errs.length}</div><div class="l">错误</div></div></div>
+    <div class="sum warn"><span class="ico">⚠️</span><div><div class="n">${warns.length}</div><div class="l">警告</div></div></div>
+    <div class="sum info"><span class="ico">💡</span><div><div class="n">${infos.length}</div><div class="l">提示</div></div></div>
+    <div class="sum jobs"><span class="ico">📋</span><div><div class="n">${jobsOk}/${jobs.length}</div><div class="l">Job 通过</div></div></div>
   </div>`;
 
   // Job 状态
-  html += `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">`;
+  html += '<div class="jobs-bar">';
   for (const j of jobs) {
+    const cls = j.conclusion === 'success' ? 'ok' : j.conclusion === 'failure' ? 'err' : 'pending';
     const ic = j.conclusion === 'success' ? '✅' : j.conclusion === 'failure' ? '❌' : j.conclusion === 'cancelled' ? '⏹' : '⏳';
-    const color = j.conclusion === 'failure' ? 'var(--red)' : j.conclusion === 'success' ? 'var(--green)' : 'var(--muted)';
-    html += `<span style="padding:4px 10px;border:1px solid var(--border);border-radius:14px;font-size:11px;color:${color}">${ic} ${j.name}</span>`;
+    html += `<span class="job-chip ${cls}">${ic} ${esc(j.name)}</span>`;
   }
-  html += `</div>`;
+  html += '</div>';
 
-  if (codeAnns.length === 0) {
-    const allOk = jobs.every(j => j.conclusion === 'success');
-    if (allOk && jobs.length > 0) {
-      html += '<div class="empty">✅ 全部检查通过，没有发现代码错误</div>';
+  // 无代码错误
+  if (code.length === 0) {
+    const allOk = jobs.length > 0 && jobsFail === 0;
+    if (allOk) {
+      html += '<div class="empty">✅ 全部检查通过，没有发现代码问题</div>';
     } else if (jobs.length === 0) {
       html += '<div class="empty">本次运行没有 Job 数据</div>';
     } else {
-      html += `<div class="empty">⚠️ 没有代码错误注解<br><br>
-        <span style="font-size:12px">该运行可能因为依赖安装或其他原因失败，请点击上方 Job 卡片到 GitHub 查看日志</span></div>`;
+      html += `<div class="empty">⚠️ 没有代码错误注解<br>
+        <span style="font-size:11.5px">该运行可能因环境原因失败，点击上方 Job 标签到 GitHub 查看日志</span></div>`;
     }
-    renderNoise(html, noiseAnns, c);
+    content.innerHTML = html + buildNoiseHtml(noise);
     return;
   }
 
   // 按文件分组
   const byFile = {};
-  for (const a of codeAnns) {
+  for (const a of code) {
     const p = a.path || '(未知文件)';
-    if (!byFile[p]) byFile[p] = [];
-    byFile[p].push(a);
+    (byFile[p] = byFile[p] || []).push(a);
   }
 
-  const sortedFiles = Object.entries(byFile).sort((a, b) => b[1].length - a[1].length);
+  // 文件排序：错误数多的在前
+  const files = Object.entries(byFile).sort((a, b) => b[1].length - a[1].length);
 
-  for (const [filePath, fileAnns] of sortedFiles) {
-    const hasErr = fileAnns.some(a => a.annotation_level === 'failure');
+  for (const [filePath, anns] of files) {
+    const hasErr = anns.some(a => a.annotation_level === 'failure');
     const icon = hasErr ? '🔴' : '🟡';
 
     html += `<div class="error-group open">
       <div class="group-header" onclick="this.parentElement.classList.toggle('open')">
         <span class="arrow">▶</span>
         <span>${icon}</span>
-        <span class="fname">${filePath}</span>
-        <span class="count">${fileAnns.length} 个问题</span>
+        <span class="fname">${esc(filePath)}</span>
+        <span class="count">${anns.length} 个问题</span>
       </div>
       <div class="group-body">`;
 
+    // 文件内按 Job 分组
     const byJob = {};
-    for (const a of fileAnns) {
-      const j = a.jobName || 'unknown';
-      if (!byJob[j]) byJob[j] = [];
-      byJob[j].push(a);
+    for (const a of anns) {
+      (byJob[a.jobName || '未知'] = byJob[a.jobName || '未知'] || []).push(a);
     }
 
     for (const [jobName, jobAnns] of Object.entries(byJob)) {
-      html += `<div class="job-label">📋 ${jobName}</div>`;
+      // 严重程度排序：error > warning > notice
+      const order = { failure: 0, warning: 1, notice: 2 };
+      jobAnns.sort((a, b) => (order[a.annotation_level] ?? 3) - (order[b.annotation_level] ?? 3));
+
+      html += `<div class="job-label">📋 ${esc(jobName)} · ${jobAnns.length} 条</div>`;
+
       for (const a of jobAnns) {
-        const line = a.start_line ? (a.end_line && a.end_line !== a.start_line ? `:${a.start_line}-${a.end_line}` : `:${a.start_line}`) : '';
+        const line = a.start_line
+          ? (a.end_line && a.end_line !== a.start_line ? `:${a.start_line}-${a.end_line}` : `:${a.start_line}`)
+          : '';
         const lv = a.annotation_level === 'failure' ? '❌' : a.annotation_level === 'warning' ? '⚠️' : '💡';
-        const msg = (a.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        const title = (a.title || '').replace(/</g, '&lt;');
         const ghUrl = `https://github.com/zzllcake/-/blob/${branch}/${filePath}${line}`;
+        const title = a.title && a.title !== a.message ? a.title : '';
 
         html += `<div class="error-item">
           <span class="icon">${lv}</span>
           <div class="info">
-            <div class="loc"><a href="${ghUrl}" target="_blank">${filePath}${line}</a></div>
-            <div class="msg">${msg}</div>
-            ${title && title !== msg ? `<div class="rule">${title}</div>` : ''}
+            <div class="loc"><a href="${ghUrl}" target="_blank" title="在 GitHub 打开">${esc(filePath)}${line}</a></div>
+            <div class="msg">${esc(a.message)}</div>
+            ${title ? `<div class="rule">${esc(title)}</div>` : ''}
           </div>
         </div>`;
       }
@@ -328,120 +658,83 @@ function renderDetail(jobs, annotations, branch, runId) {
     html += '</div></div>';
   }
 
-  renderNoise(html, noiseAnns, c);
+  content.innerHTML = html + buildNoiseHtml(noise);
 }
 
-// 把工作流噪音警告折叠显示在最后
-function renderNoise(html, noiseAnns, container) {
-  if (noiseAnns.length > 0) {
-    html += `<div class="error-group" id="noiseGroup">
-      <div class="group-header" onclick="this.parentElement.classList.toggle('open')" style="opacity:.65">
-        <span class="arrow">▶</span>
-        <span>⚙️</span>
-        <span class="fname">工作流环境提示（非代码问题）</span>
-        <span class="count">${noiseAnns.length} 条</span>
-      </div>
-      <div class="group-body">
-        <div style="padding:8px 14px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border)">
-          💡 这些是 GitHub Actions 运行环境的提示（如 actions 版本、Node 版本弃用），不影响你的代码质量。
-        </div>`;
-    for (const a of noiseAnns.slice(0, 20)) {
-      const msg = (a.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      html += `<div class="error-item" style="opacity:.6">
-        <span class="icon">⚙️</span>
-        <div class="info">
-          <div class="msg" style="font-size:12px">${msg}</div>
-        </div>
+function buildNoiseHtml(noise) {
+  if (!noise || noise.length === 0) return '';
+  let html = `<div class="error-group" style="margin-top:14px">
+    <div class="group-header" onclick="this.parentElement.classList.toggle('open')" style="opacity:.6">
+      <span class="arrow">▶</span>
+      <span>⚙️</span>
+      <span class="fname">工作流环境提示（非代码问题）</span>
+      <span class="count">${noise.length} 条</span>
+    </div>
+    <div class="group-body">
+      <div style="padding:8px 13px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border)">
+        💡 GitHub Actions 运行环境提示（actions 版本、Node 版本等），不影响代码质量
       </div>`;
-    }
-    if (noiseAnns.length > 20) {
-      html += `<div style="padding:8px 14px;font-size:11px;color:var(--muted)">... 还有 ${noiseAnns.length - 20} 条</div>`;
-    }
-    html += '</div></div>';
+  for (const a of noise.slice(0, 15)) {
+    html += `<div class="error-item" style="opacity:.55">
+      <span class="icon">⚙️</span>
+      <div class="info"><div class="msg" style="font-size:11.5px">${esc(a.message)}</div></div>
+    </div>`;
   }
-  container.innerHTML = html;
+  if (noise.length > 15) {
+    html += `<div style="padding:8px 13px;font-size:11px;color:var(--muted)">... 还有 ${noise.length - 15} 条</div>`;
+  }
+  html += '</div></div>';
+  return html;
 }
 
 // ============================================================
-// 操作日志
-// ============================================================
-function showLog(msg, type = 'info') {
-  const el = document.getElementById('actionLog');
-  const colors = { info: 'var(--accent)', ok: 'var(--green)', err: 'var(--red)', warn: 'var(--yellow)' };
-  const bgs = { info: 'rgba(88,166,255,.12)', ok: 'rgba(63,185,80,.12)', err: 'rgba(248,81,73,.12)', warn: 'rgba(210,153,34,.12)' };
-  el.style.display = 'block';
-  el.style.color = colors[type];
-  el.style.background = bgs[type];
-  el.innerHTML = msg;
-}
-
-function setBtnLoading(id, loading, text) {
-  const btn = document.getElementById(id);
-  btn.disabled = loading;
-  btn.textContent = loading ? '⏳ 处理中' : text;
-  btn.style.opacity = loading ? '.6' : '1';
-}
-
-// ============================================================
-// 创建分支（只建分支，不建 PR）
+// 创建分支 / PR
 // ============================================================
 async function createBranch() {
-  const name = document.getElementById('branchInput').value.trim();
+  const name = $('branchInput').value.trim();
   if (!name) return showLog('❌ 请输入分支名', 'err');
-  if (!/^[a-zA-Z0-9._\/-]+$/.test(name)) return showLog('❌ 分支名只能包含字母数字和 . _ / -', 'err');
+  if (!/^[a-zA-Z0-9._\/-]+$/.test(name)) return showLog('❌ 分支名只能含字母数字和 . _ / -', 'err');
 
   setBtnLoading('btnBranch', true);
-  showLog('⏳ 正在获取 main 分支信息...', 'info');
+  showLog('⏳ 获取 main 分支信息...', 'info');
 
   try {
     const main = await api('/git/refs/heads/main');
-    showLog('⏳ 正在创建分支 ' + name + ' ...', 'info');
-
+    showLog(`⏳ 创建分支 ${esc(name)} ...`, 'info');
     try {
       await api('/git/refs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ref: `refs/heads/${name}`, sha: main.object.sha })
       });
-      showLog(`✅ 分支 <b>${name}</b> 创建成功！<br><br>
-        📌 下一步：在本地推送到这个分支<br>
-        <code style="font-size:11px">git push origin HEAD:${name}</code><br><br>
-        💡 推送后刷新即可看到审查结果`, 'ok');
+      showLog(`✅ 分支 <b>${esc(name)}</b> 创建成功！<br>
+        📌 推送代码：<code>git push origin HEAD:${esc(name)}</code><br>
+        💡 推送后点「刷新」查看审查结果`, 'ok');
     } catch (e) {
-      if (e.message.includes('already exists')) {
-        showLog(`ℹ️ 分支 <b>${name}</b> 已存在，无需重复创建`, 'warn');
-      } else {
-        throw e;
-      }
+      if (e.message.includes('already exists')) showLog(`ℹ️ 分支 <b>${esc(name)}</b> 已存在`, 'warn');
+      else throw e;
     }
-    setTimeout(loadBranches, 1500);
+    setTimeout(loadBranches, 1200);
   } catch (e) {
-    showLog('❌ 创建失败: ' + e.message, 'err');
+    showLog('❌ 创建失败: ' + esc(e.message), 'err');
   } finally {
     setBtnLoading('btnBranch', false, '建分支');
   }
 }
 
-// ============================================================
-// 创建 PR（需要分支已有提交）
-// ============================================================
 async function createPR() {
-  const name = document.getElementById('branchInput').value.trim();
+  const name = $('branchInput').value.trim();
   if (!name) return showLog('❌ 请输入分支名', 'err');
 
   setBtnLoading('btnPR', true);
-  showLog('⏳ 正在检查分支...', 'info');
+  showLog('⏳ 检查分支...', 'info');
 
   try {
-    // 检查分支是否存在
-    let branchExists = false;
-    try {
-      await api(`/git/refs/heads/${name}`);
-      branchExists = true;
-    } catch (e) { /* 不存在 */ }
+    let exists = false;
+    try { await api(`/git/refs/heads/${name}`); exists = true; } catch (e) {}
 
-    if (!branchExists) {
-      showLog('⏳ 分支不存在，先创建分支...', 'info');
+    if (!exists) {
+      showLog('⏳ 分支不存在，正在创建...', 'info');
       const main = await api('/git/refs/heads/main');
       await api('/git/refs', {
         method: 'POST',
@@ -450,7 +743,7 @@ async function createPR() {
       });
     }
 
-    showLog('⏳ 正在创建 PR...', 'info');
+    showLog('⏳ 创建 PR...', 'info');
     const pr = await api('/pulls', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -462,47 +755,80 @@ async function createPR() {
       })
     });
 
-    showLog(`✅ PR <b>#${pr.number}</b> 创建成功！<br><br>
-      🔗 <a href="${pr.html_url}" target="_blank" style="color:var(--accent)">在 GitHub 查看</a><br><br>
-      ⏳ 审查将在几秒后自动开始`, 'ok');
-    setTimeout(loadAll, 3000);
+    showLog(`✅ PR <b>#${pr.number}</b> 创建成功！<br>
+      🔗 <a href="${pr.html_url}" target="_blank" style="color:var(--accent)">在 GitHub 查看</a><br>
+      ⏳ 审查即将开始，稍后刷新查看`, 'ok');
+    setTimeout(refreshAll, 3000);
   } catch (e) {
     let hint = '';
     if (e.message.includes('No commits between')) {
-      hint = `<br><br>💡 <b>原因</b>：分支 <b>${name}</b> 和 main 内容相同，没有新提交，GitHub 不允许创建 PR。<br><br>
-        <b>解决办法</b>：<br>
-        1️⃣ 本地切到该分支：<code style="font-size:11px">git checkout -b ${name}</code><br>
-        2️⃣ 修改一些代码<br>
-        3️⃣ 提交推送：<code style="font-size:11px">git push -u origin ${name}</code><br>
-        4️⃣ 再回来点「建PR」`;
+      hint = `<br><br>💡 <b>原因</b>：分支与 main 内容相同，没有新提交<br>
+        <b>解决</b>：本地改代码后 <code>git push origin HEAD:${esc(name)}</code>`;
     } else if (e.message.includes('A pull request already exists')) {
-      hint = '<br><br>💡 该分支的 PR 已经存在，去 GitHub 查看即可。';
+      hint = '<br><br>💡 该分支的 PR 已存在';
     }
-    showLog('❌ 创建失败: ' + e.message + hint, 'err');
+    showLog('❌ 创建失败: ' + esc(e.message) + hint, 'err');
   } finally {
     setBtnLoading('btnPR', false, '建PR');
   }
 }
 
+// ============================================================
+// 状态 / 刷新
+// ============================================================
 async function updateStatus() {
   try {
     const s = await fetch('http://localhost:3456/api/status').then(r => r.json());
-    document.getElementById('statusDot').className = 'dot ' + (s.authenticated ? 'on' : 'off');
-    document.getElementById('statusText').textContent = s.authenticated ? `✅ ${s.repo}` : '❌ 未登录';
+    $('statusDot').className = 'dot ' + (s.authenticated ? 'on' : 'off');
+    $('statusText').textContent = s.authenticated ? `✅ ${s.repo}` : '❌ 未登录';
+    return true;
   } catch {
-    document.getElementById('statusDot').className = 'dot off';
-    document.getElementById('statusText').textContent = '❌ 服务器未启动';
+    $('statusDot').className = 'dot off';
+    $('statusText').textContent = '❌ 服务器未启动';
+    return false;
   }
 }
 
-async function loadAll() {
-  await Promise.all([updateStatus(), loadBranches()]);
-  if (currentBranch) reloadDetail();
+async function refreshAll(manual = true) {
+  if (manual) {
+    setBtnLoading('btnRefresh', true);
+    $('btnRefresh').textContent = '⏳ 刷新中';
+  }
+  try {
+    await updateStatus();
+    await loadBranches();
+    if (currentBranch) await selectBranch(currentBranch, currentRunId);
+    lastRefreshTime = new Date();
+    $('lastRefresh').textContent = `上次刷新 ${fmtTime(lastRefreshTime)}`;
+  } finally {
+    if (manual) setBtnLoading('btnRefresh', false, '🔄 刷新');
+    $('btnRefresh').textContent = '🔄 刷新';
+  }
 }
 
-setInterval(() => { if (!document.hidden) loadBranches(); }, 30000);
+function toggleAuto() {
+  if ($('autoRefresh').checked) startAuto();
+  else stopAuto();
+}
 
-loadAll();
+function startAuto() {
+  stopAuto();
+  autoTimer = setInterval(() => {
+    if (!document.hidden) refreshAll(false);
+  }, 30000);
+}
+
+function stopAuto() {
+  if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+}
+
+// ============================================================
+// 初始化
+// ============================================================
+(async function init() {
+  await refreshAll(false);
+  if ($('autoRefresh').checked) startAuto();
+})();
 </script>
 </body>
 </html>
