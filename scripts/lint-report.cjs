@@ -68,6 +68,28 @@ async function main() {
     if (ignored) debugLog.被忽略的文件.push(rel);
   }
 
+  // ---- 忽略配置体检：检查是否有"看起来像源码"的文件被忽略 ----
+  const SUSPICIOUS_PATTERNS = [
+    { re: /error/i, msg: '文件名含 error，可能是测试样本，请确认是否需要审查' },
+    { re: /sample|example|demo|test-data/i, msg: '文件名疑似测试数据，请确认是否需要审查' },
+    { re: /\.(ts|tsx|js|jsx)$/, msg: '源码文件被忽略' },
+  ];
+  const suspicious = [];
+  for (const f of debugLog.被忽略的文件) {
+    // 排除典型的非源码目录
+    if (/^(node_modules|dist|coverage|reports|\.git)\//.test(f)) continue;
+    for (const p of SUSPICIOUS_PATTERNS) {
+      if (p.re.test(f)) {
+        suspicious.push({ 文件: f, 原因: p.msg });
+        break;
+      }
+    }
+  }
+  debugLog.可疑忽略文件 = suspicious;
+  if (suspicious.length > 0) {
+    debugLog.警告 = `有 ${suspicious.length} 个疑似源码/测试文件被 ignore 配置排除，可能导致漏检`;
+  }
+
   // ---- 执行扫描 ----
   let results;
   try {
@@ -208,6 +230,15 @@ async function main() {
     parseFailures.forEach(p => {
       console.log(`       - ${p.文件}: ${p.错误[0]?.信息 || '未知'}`);
     });
+
+    // 忽略配置警告（防漏检）
+    if (suspicious.length > 0) {
+      console.log('');
+      console.log('  ⚠️  忽略配置警告:');
+      console.log(`     ${debugLog.警告}`);
+      suspicious.forEach(s => console.log(`       - ${s.文件} (${s.原因})`));
+      console.log('     👉 如果这些文件需要被审查，请从 .eslintrc.cjs 的 ignorePatterns 中移除');
+    }
     console.log('');
     console.log('  🔝 规则命中 TOP 10:');
     Object.entries(report.规则统计).slice(0, 10).forEach(([rule, cnt]) => {

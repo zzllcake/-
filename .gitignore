@@ -34,3 +34,4 @@ Thumbs.db
 
 # ZCode session files
 .zcode/
+.tmp-*.json
