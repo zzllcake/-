@@ -28,8 +28,8 @@ jobs:
     name: 🔍 代码规范检查
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -47,8 +47,8 @@ jobs:
     name: 🔷 类型安全检查
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -66,8 +66,8 @@ jobs:
       matrix:
         node-version: [18, 20, 22]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -76,7 +76,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload test report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: success() || failure()
         with:
           name: test-report-node-${{ matrix.node-version }}
@@ -84,7 +84,7 @@ jobs:
           retention-days: 7
 
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: success() || failure()
         with:
           name: coverage-report-node-${{ matrix.node-version }}
@@ -100,8 +100,8 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -111,7 +111,7 @@ jobs:
         run: |
           npm audit --audit-level=high 2>&1 | tee npm-audit-output.txt || true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: success() || failure()
         with:
           name: npm-audit-report
@@ -119,13 +119,13 @@ jobs:
           retention-days: 7
 
       - name: CodeQL Init
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
           queries: security-and-quality
 
       - name: CodeQL Analyze
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
 
   # ----------------------------------------------------------
   # Job 5: 汇总结果 → PR 评论
@@ -139,7 +139,7 @@ jobs:
       pull-requests: write
       checks: read
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
