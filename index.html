@@ -24,27 +24,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-primary{background:var(--accent);color:#000}
 .btn-ghost{background:var(--border);color:var(--text)}
+.btn-warn{background:var(--yellow);color:#000}
+.btn-sm{padding:4px 10px;font-size:11px}
 .toggle{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;user-select:none}
-.toggle input{cursor:pointer}
 
-/* ===== Stats Bar ===== */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;flex-shrink:0}
-.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;position:relative;overflow:hidden}
-.stat .v{font-size:22px;font-weight:700;line-height:1.2}
+/* ===== Stats ===== */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;flex-shrink:0}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:11px 13px}
+.stat .v{font-size:21px;font-weight:700;line-height:1.2}
 .stat .k{font-size:11px;color:var(--muted);margin-top:3px}
 .stat.total .v{color:var(--accent)}
 .stat.fail .v{color:var(--red)}
 .stat.ok .v{color:var(--green)}
 .stat.pending .v{color:var(--yellow)}
 .stat.rate .v{color:var(--purple)}
-.stat .bar{height:4px;background:var(--bg);border-radius:2px;margin-top:8px;overflow:hidden;display:flex}
+.stat .bar{height:4px;background:var(--bg);border-radius:2px;margin-top:7px;overflow:hidden;display:flex}
 .stat .bar i{display:block;height:100%}
 .stat .bar .b-ok{background:var(--green)}
 .stat .bar .b-fail{background:var(--red)}
 .stat .bar .b-pending{background:var(--yellow)}
 
 /* ===== Layout ===== */
-.grid{display:grid;grid-template-columns:360px 1fr;gap:12px;flex:1;min-height:0}
+.grid{display:grid;grid-template-columns:340px 1fr;gap:12px;flex:1;min-height:0}
 @media(max-width:1000px){.grid{grid-template-columns:1fr}}
 
 /* ===== Sidebar ===== */
@@ -63,13 +64,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .filter-tab.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
 .filter-tab .n{opacity:.75;margin-left:3px}
 .sort-select{margin-left:auto;padding:4px 7px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;cursor:pointer}
-.sort-select:focus{outline:none;border-color:var(--accent)}
 
 .branch-list{flex:1;overflow-y:auto;padding:8px}
 .branch-item{padding:9px 10px;border:1px solid var(--border);border-radius:6px;margin-bottom:6px;cursor:pointer;transition:all .15s;position:relative}
 .branch-item:hover{background:rgba(88,166,255,.08);border-color:var(--accent)}
 .branch-item.active{background:rgba(88,166,255,.15);border-color:var(--accent);border-left:3px solid var(--accent)}
-.branch-item .name{font-weight:500;margin-bottom:4px;word-break:break-all;font-size:12px;padding-right:60px}
+.branch-item .name{font-weight:500;margin-bottom:4px;word-break:break-all;font-size:12px;padding-right:58px}
 .branch-item .meta{display:flex;gap:7px;font-size:10px;color:var(--muted);flex-wrap:wrap}
 .branch-item .badge{position:absolute;top:9px;right:9px;padding:2px 7px;border-radius:9px;font-size:10px;font-weight:600;white-space:nowrap}
 .badge.ok{background:rgba(63,185,80,.2);color:var(--green)}
@@ -77,32 +77,60 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .badge.pending{background:rgba(210,153,34,.2);color:var(--yellow)}
 .badge.cancel{background:rgba(139,148,158,.2);color:var(--muted)}
 
-/* ===== Main ===== */
+/* ===== Detail Panel ===== */
 .main{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;min-height:0}
-.toolbar{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
-.toolbar .title{font-size:14px;font-weight:600;flex:1;word-break:break-all}
-.toolbar .sub{font-size:11px;color:var(--muted);font-weight:400;margin-left:8px}
-.toolbar .actions{display:flex;gap:6px}
-.content{flex:1;overflow-y:auto;padding:12px;min-height:0}
+.detail-scroll{flex:1;overflow-y:auto;padding:14px;min-height:0}
 
-/* ===== Summary ===== */
-.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:12px}
-.sum{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;display:flex;align-items:center;gap:9px}
-.sum .ico{font-size:17px}
-.sum .n{font-size:18px;font-weight:700;line-height:1}
+/* -- 1. 顶部操作栏 -- */
+.detail-header{display:flex;align-items:flex-start;gap:12px;padding-bottom:13px;border-bottom:1px solid var(--border);margin-bottom:13px}
+.detail-header .title-area{flex:1;min-width:0}
+.detail-header h2{font-size:17px;font-weight:600;word-break:break-all;margin-bottom:5px}
+.detail-header .badges{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.state-badge{padding:3px 10px;border-radius:11px;font-size:11.5px;font-weight:600}
+.state-badge.ok{background:rgba(63,185,80,.2);color:var(--green)}
+.state-badge.err{background:rgba(248,81,73,.2);color:var(--red)}
+.state-badge.pending{background:rgba(210,153,34,.2);color:var(--yellow)}
+.state-badge.cancel{background:rgba(139,148,158,.2);color:var(--muted)}
+.detail-header .ops{display:flex;gap:7px;flex-shrink:0}
+
+/* -- 2. 基础信息卡片 -- */
+.info-card{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
+.info-cell{background:var(--bg);padding:11px 13px}
+.info-cell .k{font-size:10.5px;color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.info-cell .v{font-size:13px;font-weight:500;word-break:break-all}
+.info-cell .v.link{color:var(--accent);cursor:pointer}
+.info-cell .v.link:hover{text-decoration:underline}
+
+/* -- 3. 错误区域 -- */
+.section{margin-bottom:16px}
+.section-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.section-head h3{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
+.section-head .spacer{flex:1}
+.sev-filter{display:flex;gap:4px}
+.sev-tab{padding:3px 9px;border-radius:11px;font-size:11px;cursor:pointer;background:var(--bg);border:1px solid var(--border);color:var(--muted);user-select:none}
+.sev-tab:hover{border-color:var(--accent)}
+.sev-tab.active{font-weight:600}
+.sev-tab[data-sev="all"].active{background:var(--accent);color:#000;border-color:var(--accent)}
+.sev-tab[data-sev="failure"].active{background:rgba(248,81,73,.25);color:var(--red);border-color:var(--red)}
+.sev-tab[data-sev="warning"].active{background:rgba(210,153,34,.25);color:var(--yellow);border-color:var(--yellow)}
+.sev-tab[data-sev="notice"].active{background:rgba(88,166,255,.25);color:var(--accent);border-color:var(--accent)}
+
+.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;margin-bottom:11px}
+.sum{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:9px 11px;display:flex;align-items:center;gap:8px}
+.sum .ico{font-size:16px}
+.sum .n{font-size:17px;font-weight:700;line-height:1}
 .sum .l{font-size:10px;color:var(--muted);margin-top:2px}
 .sum.err .n{color:var(--red)}
 .sum.warn .n{color:var(--yellow)}
 .sum.info .n{color:var(--accent)}
 .sum.jobs .n{color:var(--purple)}
 
-.jobs-bar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
-.job-chip{padding:4px 10px;border:1px solid var(--border);border-radius:12px;font-size:11px;cursor:default}
+.jobs-bar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:11px}
+.job-chip{padding:4px 10px;border:1px solid var(--border);border-radius:12px;font-size:11px}
 .job-chip.ok{color:var(--green);border-color:rgba(63,185,80,.4)}
 .job-chip.err{color:var(--red);border-color:rgba(248,81,73,.4)}
 .job-chip.pending{color:var(--yellow)}
 
-/* ===== Error groups ===== */
 .error-group{margin-bottom:9px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
 .group-header{display:flex;align-items:center;gap:8px;padding:10px 13px;background:var(--bg);cursor:pointer;font-size:13px;font-weight:500;user-select:none}
 .group-header:hover{background:rgba(88,166,255,.06)}
@@ -112,7 +140,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .group-header .count{font-size:11px;color:var(--muted);white-space:nowrap;padding:2px 8px;background:var(--card);border-radius:10px}
 .group-body{display:none}
 .error-group.open .group-body{display:block}
-.job-label{padding:5px 13px;font-size:10px;color:var(--muted);background:rgba(0,0,0,.3);border-top:1px solid var(--border);text-transform:uppercase;letter-spacing:.5px}
+.job-label{padding:5px 13px;font-size:10px;color:var(--muted);background:rgba(0,0,0,.3);border-top:1px solid var(--border);letter-spacing:.4px}
 .error-item{padding:9px 13px;border-top:1px solid var(--border);font-size:12.5px;display:flex;gap:9px;align-items:flex-start}
 .error-item:hover{background:rgba(88,166,255,.04)}
 .error-item .icon{flex-shrink:0;margin-top:1px}
@@ -123,9 +151,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .error-item .msg{color:var(--text);line-height:1.5;word-break:break-word}
 .error-item .rule{font-size:10.5px;color:var(--muted);margin-top:3px;font-family:monospace;background:var(--card);display:inline-block;padding:1px 6px;border-radius:4px}
 
+/* -- 4. 历史记录 -- */
+.history-list{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.history-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg);border-bottom:1px solid var(--border);font-size:12px;cursor:pointer;transition:background .12s}
+.history-item:last-child{border-bottom:none}
+.history-item:hover{background:rgba(88,166,255,.07)}
+.history-item.current{background:rgba(88,166,255,.13);border-left:3px solid var(--accent)}
+.history-item .h-ico{flex-shrink:0}
+.history-item .h-time{color:var(--muted);white-space:nowrap;font-size:11px}
+.history-item .h-num{color:var(--muted);font-size:11px;white-space:nowrap}
+.history-item .h-sum{flex:1;font-size:11.5px}
+.history-item .h-sha{font-family:monospace;font-size:10.5px;color:var(--muted)}
+.history-item .h-view{color:var(--accent);font-size:11px;white-space:nowrap}
+
 /* ===== States ===== */
 .empty{text-align:center;padding:50px 20px;color:var(--muted);font-size:13px;line-height:1.9}
-.loading{text-align:center;padding:28px;color:var(--muted);font-size:12px}
+.loading{text-align:center;padding:26px;color:var(--muted);font-size:12px}
 .spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .skeleton{background:linear-gradient(90deg,var(--border) 25%,rgba(48,54,61,.4) 50%,var(--border) 75%);background-size:200% 100%;animation:sk 1.4s infinite;border-radius:6px}
@@ -134,11 +175,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .sk-line{height:13px;margin-bottom:8px}
 .error-box{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:6px;padding:16px;margin:10px;font-size:12.5px;line-height:1.7}
 .error-box .t{color:var(--red);font-weight:600;margin-bottom:6px}
-.error-box button{margin-top:9px}
 
-/* ===== Log ===== */
-#actionLog{display:none;margin:0 12px 10px;padding:10px 11px;border-radius:6px;font-size:11.5px;line-height:1.7;word-break:break-all}
+#actionLog{display:none;margin-bottom:10px;padding:10px 11px;border-radius:6px;font-size:11.5px;line-height:1.7;word-break:break-all}
 #actionLog code{background:rgba(0,0,0,.35);padding:1px 5px;border-radius:3px;font-size:10.5px}
+
+/* ===== Modal ===== */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);width:520px;max-width:100%;max-height:90vh;overflow-y:auto}
+.modal-head{display:flex;align-items:center;padding:15px 18px;border-bottom:1px solid var(--border)}
+.modal-head h2{font-size:15px;font-weight:600;flex:1}
+.modal-head .x{cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:0 4px}
+.modal-head .x:hover{color:var(--text)}
+.modal-body{padding:16px 18px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+.field label .req{color:var(--red)}
+.field input[type=text],.field select{width:100%;padding:8px 11px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent)}
+.field .hint{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5}
+.field .check-row{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text);cursor:pointer}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;padding:13px 18px;border-top:1px solid var(--border)}
+.modal-msg{padding:9px 12px;border-radius:6px;font-size:12px;margin-bottom:14px;display:none}
 
 /* ===== Footer ===== */
 .footer{flex-shrink:0;display:flex;align-items:center;gap:14px;padding:8px 0;border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
@@ -163,26 +221,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   </div>
 </div>
 
-<!-- Stats Overview -->
-<div class="stats" id="statsBar">
+<!-- Stats -->
+<div class="stats">
   <div class="stat total"><div class="v" id="stTotal">-</div><div class="k">总分支数</div></div>
   <div class="stat fail"><div class="v" id="stFail">-</div><div class="k">失败分支</div></div>
   <div class="stat ok"><div class="v" id="stOk">-</div><div class="k">通过分支</div></div>
   <div class="stat pending"><div class="v" id="stPending">-</div><div class="k">运行中</div></div>
-  <div class="stat rate">
-    <div class="v" id="stRate">-</div><div class="k">通过率</div>
+  <div class="stat rate"><div class="v" id="stRate">-</div><div class="k">通过率</div>
     <div class="bar" id="stBar"><i class="b-ok" style="width:0"></i><i class="b-fail" style="width:0"></i><i class="b-pending" style="width:0"></i></div>
   </div>
-  <div class="stat"><div class="v" style="font-size:15px;padding-top:5px" id="stLastRun">-</div><div class="k">最近一次运行</div></div>
+  <div class="stat"><div class="v" style="font-size:14px;padding-top:6px" id="stLastRun">-</div><div class="k">最近一次运行</div></div>
 </div>
 
-<!-- Main Grid -->
+<!-- Grid -->
 <div class="grid">
-  <!-- Sidebar -->
+  <!-- 左侧：分支列表（固定） -->
   <div class="sidebar">
     <div class="sidebar-top">
       <div class="form-row">
-        <input id="branchInput" placeholder="新分支名，如 fix/login-bug" value="fix/issue">
+        <input id="branchInput" placeholder="新分支名" value="fix/issue">
         <button class="btn btn-primary" id="btnBranch" onclick="createBranch()">建分支</button>
         <button class="btn btn-primary" id="btnPR" onclick="createPR()">建PR</button>
       </div>
@@ -209,20 +266,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
   </div>
 
-  <!-- Main -->
+  <!-- 右侧：详情视图 -->
   <div class="main">
-    <div class="toolbar">
-      <span class="title" id="detailTitle">👈 从左侧选择一个分支</span>
-      <span id="detailSub" class="sub"></span>
-      <div class="actions">
-        <button class="btn btn-ghost" id="btnReloadDetail" onclick="reloadDetail()" style="display:none">🔄 重新加载</button>
+    <div class="detail-scroll" id="detailScroll">
+      <div class="empty" id="emptyState">
+        👈 从左侧选择一个分支查看详情<br>
+        <span style="font-size:11.5px">包含：基础信息 · 审查错误 · 运行历史</span>
       </div>
-    </div>
-    <div class="content" id="detailContent">
-      <div class="empty">
-        👈 从左侧选择一个分支查看审查结果<br>
-        <span style="font-size:11.5px">显示：错误位置 · 错误类型 · 所属规则 · 分类统计</span>
-      </div>
+      <div id="detailView" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -235,18 +286,67 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 </div>
 
+<!-- 编辑弹窗 -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>✏️ 编辑分支配置</h2>
+      <span class="x" onclick="closeEdit()">✕</span>
+    </div>
+    <div class="modal-body">
+      <div class="modal-msg" id="editMsg"></div>
+
+      <div class="field">
+        <label>分支名 <span class="req" id="nameReq">*</span></label>
+        <input type="text" id="editName" placeholder="例如 fix/login-bug">
+        <div class="hint" id="nameHint">修改分支名会创建新分支引用并删除旧引用。<span style="color:var(--yellow)">注意：如果该分支有已打开的 PR，改名的 PR 会被自动关闭。</span></div>
+      </div>
+
+      <div class="field" id="prTitleField" style="display:none">
+        <label>PR 标题</label>
+        <input type="text" id="editPrTitle" placeholder="PR 标题">
+        <div class="hint">修改后立即同步到 GitHub</div>
+      </div>
+
+      <div class="field">
+        <label>默认严重程度筛选</label>
+        <select id="editSevFilter">
+          <option value="all">全部</option>
+          <option value="failure">只看错误 ❌</option>
+          <option value="warning">只看警告 ⚠️</option>
+        </select>
+        <div class="hint">保存后作为该分支的默认筛选（本地保存）</div>
+      </div>
+
+      <div class="field">
+        <label>显示选项</label>
+        <label class="check-row"><input type="checkbox" id="editCollapseOk"> 自动折叠无错误的 Job</label>
+        <label class="check-row" style="margin-top:7px"><input type="checkbox" id="editHideNoise" checked> 隐藏工作流环境提示</label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeEdit()">取消</button>
+      <button class="btn btn-primary" id="btnSaveEdit" onclick="saveEdit()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================================
 // 全局状态
 // ============================================================
-let allBranches = [];       // 所有分支数据
-let currentBranch = null;   // 当前选中
+let allBranches = [];
+let currentBranch = null;
 let currentRunId = null;
+let currentRun = null;      // 当前 run 详情
+let currentJobs = [];       // 当前 jobs
+let currentAnns = [];       // 当前注解
+let branchRuns = [];        // 当前分支的所有运行
 let currentFilter = 'all';
+let sevFilter = 'all';      // 严重程度筛选
 let autoTimer = null;
-let lastRefreshTime = null;
 let loadingBranches = false;
-let loadingDetail = false;
+let userPrefs = JSON.parse(localStorage.getItem('reviewPrefs') || '{}');
 
 const $ = id => document.getElementById(id);
 
@@ -263,9 +363,9 @@ async function api(path, opts) {
 // ============================================================
 // 工具
 // ============================================================
-function timeAgo(dateStr) {
-  if (!dateStr) return '未知';
-  const diff = Date.now() - new Date(dateStr).getTime();
+function timeAgo(s) {
+  if (!s) return '未知';
+  const diff = Date.now() - new Date(s).getTime();
   const min = Math.floor(diff / 60000);
   if (min < 1) return '刚刚';
   if (min < 60) return `${min}分钟前`;
@@ -273,17 +373,16 @@ function timeAgo(dateStr) {
   if (hr < 24) return `${hr}小时前`;
   const d = Math.floor(hr / 24);
   if (d < 30) return `${d}天前`;
-  return new Date(dateStr).toLocaleDateString('zh-CN');
+  return new Date(s).toLocaleDateString('zh-CN');
 }
-
-function fmtTime(date) {
-  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+function fmtFull(s) {
+  if (!s) return '-';
+  const d = new Date(s);
+  return d.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
-
 function esc(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
-
 function showLog(msg, type = 'info') {
   const el = $('actionLog');
   const colors = { info: 'var(--accent)', ok: 'var(--green)', err: 'var(--red)', warn: 'var(--yellow)' };
@@ -293,16 +392,21 @@ function showLog(msg, type = 'info') {
   el.style.background = bgs[type];
   el.innerHTML = msg;
 }
-
 function setBtnLoading(id, loading, text) {
   const b = $(id);
   if (!b) return;
   b.disabled = loading;
   b.textContent = loading ? '⏳' : text;
 }
+function conclusionMeta(c) {
+  if (c === 'success') return { cls: 'ok', txt: '通过', ico: '✅' };
+  if (c === 'failure') return { cls: 'err', txt: '失败', ico: '❌' };
+  if (c === 'cancelled') return { cls: 'cancel', txt: '已取消', ico: '⏹' };
+  return { cls: 'pending', txt: '运行中', ico: '⏳' };
+}
 
 // ============================================================
-// 统计概览
+// 统计
 // ============================================================
 function renderStats() {
   const total = allBranches.length;
@@ -317,43 +421,25 @@ function renderStats() {
   $('stPending').textContent = pending;
   $('stRate').textContent = rate + '%';
 
-  const okPct = total ? ok / total * 100 : 0;
-  const failPct = total ? fail / total * 100 : 0;
-  const pendPct = total ? pending / total * 100 : 0;
   const bar = $('stBar');
-  bar.children[0].style.width = okPct + '%';
-  bar.children[1].style.width = failPct + '%';
-  bar.children[2].style.width = pendPct + '%';
+  bar.children[0].style.width = (total ? ok / total * 100 : 0) + '%';
+  bar.children[1].style.width = (total ? fail / total * 100 : 0) + '%';
+  bar.children[2].style.width = (total ? pending / total * 100 : 0) + '%';
 
-  // 最近一次运行
-  const latest = allBranches
-    .filter(b => b.lastRun)
-    .sort((a, b) => new Date(b.lastRun.created_at) - new Date(a.lastRun.created_at))[0];
+  const latest = allBranches.filter(b => b.lastRun).sort((a, b) => new Date(b.lastRun.created_at) - new Date(a.lastRun.created_at))[0];
   $('stLastRun').textContent = latest ? timeAgo(latest.lastRun.created_at) : '无';
 
-  // 筛选器计数
   $('nAll').textContent = total ? ` ${total}` : '';
   $('nFail').textContent = fail ? ` ${fail}` : '';
   $('nOk').textContent = ok ? ` ${ok}` : '';
 }
 
-function renderFooter(msg) {
-  $('footerInfo').textContent = msg;
-}
-
 // ============================================================
-// 加载分支列表
+// 分支列表
 // ============================================================
 async function loadBranches() {
   if (loadingBranches) return;
   loadingBranches = true;
-  const list = $('branchList');
-
-  // 骨架屏（仅首次）
-  if (allBranches.length === 0) {
-    list.innerHTML = '<div class="skeleton sk-item"></div><div class="skeleton sk-item"></div><div class="skeleton sk-item"></div>';
-  }
-
   try {
     const [runsData, prs] = await Promise.all([
       api('/actions/runs?per_page=50'),
@@ -361,7 +447,6 @@ async function loadBranches() {
     ]);
     const runs = runsData.workflow_runs || [];
 
-    // 按分支聚合
     const map = new Map();
     for (const run of runs) {
       const b = run.head_branch || 'unknown';
@@ -374,8 +459,9 @@ async function loadBranches() {
       map.get(b).pr = pr;
     }
 
-    // 整理数据
     allBranches = [...map.values()].map(d => {
+      // 按时间倒序
+      d.runs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       const lastRun = d.runs[0] || null;
       return {
         branch: d.branch,
@@ -383,164 +469,220 @@ async function loadBranches() {
         runCount: d.runs.length,
         lastRun,
         pr: d.pr,
-        conclusion: lastRun ? lastRun.conclusion : null
+        conclusion: lastRun ? lastRun.conclusion : null,
+        firstRun: d.runs[d.runs.length - 1] || null
       };
     });
 
     renderStats();
     renderBranches();
-    renderFooter(`已加载 ${allBranches.length} 个分支 · ${new Date().toLocaleTimeString('zh-CN')}`);
+    $('footerInfo').textContent = `已加载 ${allBranches.length} 个分支 · ${new Date().toLocaleTimeString('zh-CN')}`;
   } catch (e) {
-    list.innerHTML = `<div class="error-box">
-      <div class="t">❌ 加载失败</div>
-      ${esc(e.message)}<br>
-      <span style="color:var(--muted)">请确认服务器已启动（双击 启动控制台.bat）</span><br>
-      <button class="btn btn-primary" onclick="loadBranches()">重试</button>
+    $('branchList').innerHTML = `<div class="error-box">
+      <div class="t">❌ 加载失败</div>${esc(e.message)}<br>
+      <span style="color:var(--muted)">请确认服务器已启动</span><br>
+      <button class="btn btn-primary" style="margin-top:9px" onclick="loadBranches()">重试</button>
     </div>`;
-    renderFooter('❌ 加载失败');
   } finally {
     loadingBranches = false;
   }
 }
 
-// ============================================================
-// 渲染分支列表（带搜索/筛选/排序）
-// ============================================================
 function renderBranches() {
   const list = $('branchList');
   const kw = ($('searchInput').value || '').trim().toLowerCase();
   const sort = $('sortSelect').value;
 
   let items = allBranches.slice();
-
-  // 搜索
-  if (kw) {
-    items = items.filter(b =>
-      b.branch.toLowerCase().includes(kw) ||
-      (b.pr && String(b.pr.number).includes(kw))
-    );
-  }
-
-  // 筛选
+  if (kw) items = items.filter(b => b.branch.toLowerCase().includes(kw) || (b.pr && String(b.pr.number).includes(kw)));
   if (currentFilter === 'failure') items = items.filter(b => b.conclusion === 'failure');
   else if (currentFilter === 'success') items = items.filter(b => b.conclusion === 'success');
   else if (currentFilter === 'pending') items = items.filter(b => !b.conclusion || b.conclusion === 'cancelled');
 
-  // 排序
-  if (sort === 'time') {
-    items.sort((a, b) => new Date(b.lastRun?.created_at || 0) - new Date(a.lastRun?.created_at || 0));
-  } else if (sort === 'count') {
-    items.sort((a, b) => b.runCount - a.runCount);
-  } else if (sort === 'name') {
-    items.sort((a, b) => a.branch.localeCompare(b.branch));
-  }
+  if (sort === 'time') items.sort((a, b) => new Date(b.lastRun?.created_at || 0) - new Date(a.lastRun?.created_at || 0));
+  else if (sort === 'count') items.sort((a, b) => b.runCount - a.runCount);
+  else items.sort((a, b) => a.branch.localeCompare(b.branch));
 
-  if (allBranches.length === 0) return; // 骨架屏还在
+  if (allBranches.length === 0) return;
 
   if (items.length === 0) {
-    list.innerHTML = `<div class="empty" style="padding:30px 15px">
-      ${kw ? `没有匹配「${esc(kw)}」的分支` : '该分类下没有分支'}
-    </div>`;
+    list.innerHTML = `<div class="empty" style="padding:30px 15px">${kw ? `没有匹配「${esc(kw)}」的分支` : '该分类下没有分支'}</div>`;
     return;
   }
 
-  let html = '';
-  for (const b of items) {
-    const c = b.conclusion;
-    let badgeCls = 'pending', badgeTxt = '运行中', icon = '⏳';
-    if (c === 'success') { badgeCls = 'ok'; badgeTxt = '✅ 通过'; icon = '✅'; }
-    else if (c === 'failure') { badgeCls = 'err'; badgeTxt = '❌ 失败'; icon = '❌'; }
-    else if (c === 'cancelled') { badgeCls = 'cancel'; badgeTxt = '⏹ 取消'; icon = '⏹'; }
-
+  list.innerHTML = items.map(b => {
+    const m = conclusionMeta(b.conclusion);
     const active = b.branch === currentBranch ? ' active' : '';
     const prLabel = b.pr ? `<span style="color:var(--purple)">#${b.pr.number}</span> ` : '';
-    const when = b.lastRun ? timeAgo(b.lastRun.created_at) : '';
-
-    html += `<div class="branch-item${active}" onclick="selectBranch('${esc(b.branch).replace(/'/g, "\\'")}', ${b.lastRun?.id || 0})" title="${esc(b.branch)}">
-      <span class="badge ${badgeCls}">${badgeTxt}</span>
+    return `<div class="branch-item${active}" onclick="selectBranch('${esc(b.branch).replace(/'/g, "\\'")}', ${b.lastRun?.id || 0})" title="${esc(b.branch)}">
+      <span class="badge ${m.cls}">${m.ico} ${m.txt}</span>
       <div class="name">${prLabel}${esc(b.branch)}</div>
-      <div class="meta">
-        <span>🕐 ${when}</span>
-        <span>🔁 ${b.runCount}次</span>
-      </div>
+      <div class="meta"><span>🕐 ${timeAgo(b.lastRun?.created_at)}</span><span>🔁 ${b.runCount}次</span></div>
     </div>`;
-  }
-  list.innerHTML = html;
+  }).join('');
 }
 
 function setFilter(f) {
   currentFilter = f;
-  document.querySelectorAll('.filter-tab').forEach(t => {
-    t.classList.toggle('active', t.dataset.filter === f);
-  });
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.toggle('active', t.dataset.filter === f));
   renderBranches();
 }
 
 // ============================================================
-// 选择分支 → 加载错误详情
+// 选择分支 → 渲染详情
 // ============================================================
 async function selectBranch(branch, runId) {
   currentBranch = branch;
   currentRunId = runId;
-  $('detailTitle').textContent = `📋 ${branch}`;
-  $('detailSub').textContent = '';
-  $('btnReloadDetail').style.display = 'inline-block';
   renderBranches();
 
-  const content = $('detailContent');
+  $('emptyState').style.display = 'none';
+  $('detailView').style.display = 'block';
+  $('detailScroll').scrollTop = 0;
 
-  if (!runId) {
-    content.innerHTML = '<div class="empty">该分支暂无可用的运行记录<br><span style="font-size:11.5px">推送代码后自动触发审查</span></div>';
-    return;
-  }
+  const branchData = allBranches.find(b => b.branch === branch);
+  branchRuns = branchData ? branchData.runs : [];
+  currentRun = branchRuns.find(r => r.id === runId) || branchRuns[0] || null;
 
-  // 骨架屏
-  content.innerHTML = `<div class="skeleton sk-line" style="width:70%"></div>
-    <div class="skeleton sk-line" style="width:45%"></div>
-    <div style="margin-top:18px"></div>
+  // 显示骨架
+  $('detailView').innerHTML = `
+    <div class="skeleton sk-line" style="width:45%;height:22px"></div>
+    <div class="skeleton sk-line" style="width:25%"></div>
+    <div style="height:14px"></div>
+    <div class="info-card"><div class="info-cell skeleton" style="height:64px"></div><div class="info-cell skeleton" style="height:64px"></div><div class="info-cell skeleton" style="height:64px"></div><div class="info-cell skeleton" style="height:64px"></div></div>
     <div class="skeleton sk-item"></div><div class="skeleton sk-item"></div>
-    <div class="loading" style="margin-top:10px"><span class="spinner"></span>正在获取审查错误...</div>`;
+    <div class="loading"><span class="spinner"></span>正在获取审查结果...</div>`;
 
-  loadingDetail = true;
+  // 先渲染框架（信息卡片+历史），错误稍后填充
+  renderDetailFrame();
+
+  if (!runId) return;
+
   try {
     const jobsData = await api(`/actions/runs/${runId}/jobs`);
-    const jobs = jobsData.jobs || [];
+    currentJobs = jobsData.jobs || [];
 
     // 收集注解
-    let annotations = [];
-    const failedJobs = jobs.filter(j => j.conclusion === 'failure');
-    const toQuery = failedJobs.length > 0 ? failedJobs : jobs;
-
+    currentAnns = [];
+    const failed = currentJobs.filter(j => j.conclusion === 'failure');
+    const toQuery = failed.length > 0 ? failed : currentJobs;
     for (const job of toQuery) {
       if (!job.check_run_url) continue;
       const cid = job.check_run_url.split('/').pop();
       try {
         const anns = await api(`/check-runs/${cid}/annotations`);
-        for (const a of anns) {
-          annotations.push({ ...a, jobName: job.name });
-        }
-      } catch (e) { /* 忽略单个 job 失败 */ }
+        for (const a of anns) currentAnns.push({ ...a, jobName: job.name });
+      } catch (e) {}
     }
 
-    renderDetail(jobs, annotations, branch, runId);
+    renderDetailFrame();
+    renderErrors();
   } catch (e) {
-    content.innerHTML = `<div class="error-box">
-      <div class="t">❌ 加载审查结果失败</div>
-      ${esc(e.message)}<br>
-      <span style="color:var(--muted);font-size:11.5px">可能是网络问题，稍后重试</span><br>
-      <button class="btn btn-primary" onclick="selectBranch('${esc(branch).replace(/'/g, "\\'")}', ${runId})">重试</button>
+    $('detailView').innerHTML = `<div class="error-box">
+      <div class="t">❌ 加载审查结果失败</div>${esc(e.message)}<br>
+      <button class="btn btn-primary" style="margin-top:9px" onclick="selectBranch('${esc(branch).replace(/'/g, "\\'")}', ${runId})">重试</button>
     </div>`;
-  } finally {
-    loadingDetail = false;
   }
 }
 
-function reloadDetail() {
-  if (currentBranch) selectBranch(currentBranch, currentRunId);
+// ============================================================
+// 详情框架：顶部栏 + 信息卡 + 错误容器 + 历史
+// ============================================================
+function renderDetailFrame() {
+  const b = allBranches.find(x => x.branch === currentBranch);
+  const run = currentRun;
+  const m = conclusionMeta(run ? run.conclusion : null);
+
+  // 首次运行时间（近似：最早一次运行）
+  const firstRunTime = b && b.firstRun ? b.firstRun.created_at : null;
+
+  let html = '';
+
+  // ---- 1. 顶部操作栏 ----
+  html += `<div class="detail-header">
+    <div class="title-area">
+      <h2>${b && b.pr ? `<span style="color:var(--purple);font-size:14px">#${b.pr.number}</span> ` : ''}${esc(currentBranch)}</h2>
+      <div class="badges">
+        <span class="state-badge ${m.cls}">${m.ico} ${m.txt}</span>
+        ${run ? `<span style="font-size:11px;color:var(--muted)">运行 #${run.run_number} · 第 ${run.run_attempt || 1} 次尝试</span>` : ''}
+        ${b && b.pr ? `<a href="${b.pr.html_url}" target="_blank" style="font-size:11px;color:var(--accent);text-decoration:none">🔗 查看 PR</a>` : ''}
+      </div>
+    </div>
+    <div class="ops">
+      <button class="btn btn-ghost" onclick="openEdit()">✏️ 编辑</button>
+      <button class="btn btn-warn" id="btnRerun" onclick="rerunReview()" ${currentRunId ? '' : 'disabled'}>🔄 重新执行审查</button>
+    </div>
+  </div>`;
+
+  // ---- 2. 基础信息卡片 ----
+  html += `<div class="info-card">
+    <div class="info-cell">
+      <div class="k">📅 分支创建时间</div>
+      <div class="v">${firstRunTime ? fmtFull(firstRunTime) : '未知'}</div>
+    </div>
+    <div class="info-cell">
+      <div class="k">🕐 最近运行时间</div>
+      <div class="v">${run ? timeAgo(run.created_at) : '-'}</div>
+    </div>
+    <div class="info-cell">
+      <div class="k">🔁 运行总次数</div>
+      <div class="v">${b ? b.runCount : 0} 次</div>
+    </div>
+    <div class="info-cell">
+      <div class="k">📏 审查规则配置</div>
+      <div class="v">92 条 ESLint + 类型检查</div>
+    </div>
+  </div>`;
+
+  // ---- 3. 错误区域容器 ----
+  html += `<div class="section">
+    <div class="section-head">
+      <h3>🔍 本次审查错误</h3>
+      <span class="spacer"></span>
+      <div class="sev-filter">
+        <span class="sev-tab ${sevFilter === 'all' ? 'active' : ''}" data-sev="all" onclick="setSev('all')">全部</span>
+        <span class="sev-tab ${sevFilter === 'failure' ? 'active' : ''}" data-sev="failure" onclick="setSev('failure')">❌ 错误</span>
+        <span class="sev-tab ${sevFilter === 'warning' ? 'active' : ''}" data-sev="warning" onclick="setSev('warning')">⚠️ 警告</span>
+        <span class="sev-tab ${sevFilter === 'notice' ? 'active' : ''}" data-sev="notice" onclick="setSev('notice')">💡 提示</span>
+      </div>
+    </div>
+    <div id="errorArea"></div>
+  </div>`;
+
+  // ---- 4. 历史记录 ----
+  if (branchRuns.length > 0) {
+    html += `<div class="section">
+      <div class="section-head"><h3>📜 运行历史（${branchRuns.length} 次）</h3></div>
+      <div class="history-list">`;
+
+    for (const r of branchRuns.slice(0, 15)) {
+      const rm = conclusionMeta(r.conclusion);
+      const isCurrent = r.id === currentRunId;
+      const sha = (r.head_sha || '').slice(0, 7);
+      const dur = r.run_started_at && r.updated_at
+        ? Math.round((new Date(r.updated_at) - new Date(r.run_started_at)) / 1000) + 's'
+        : '';
+      html += `<div class="history-item${isCurrent ? ' current' : ''}" onclick="selectBranch('${esc(currentBranch).replace(/'/g, "\\'")}', ${r.id})">
+        <span class="h-ico">${rm.ico}</span>
+        <span class="h-time">${fmtFull(r.created_at)}</span>
+        <span class="h-num">#${r.run_number}</span>
+        <span class="h-sum" style="color:${rm.cls === 'err' ? 'var(--red)' : rm.cls === 'ok' ? 'var(--green)' : 'var(--muted)'}">${rm.txt}${dur ? ' · ' + dur : ''}</span>
+        <span class="h-sha">${sha}</span>
+        <span class="h-view">${isCurrent ? '当前查看' : '查看 →'}</span>
+      </div>`;
+    }
+    if (branchRuns.length > 15) {
+      html += `<div style="padding:8px 12px;font-size:11px;color:var(--muted);background:var(--bg)">... 还有 ${branchRuns.length - 15} 次运行</div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  $('detailView').innerHTML = html;
+  renderErrors();
 }
 
 // ============================================================
-// 渲染详情
+// 错误渲染（带严重程度筛选）
 // ============================================================
 const NOISE_PATTERNS = [
   /Node\.js \d+ is deprecated/i,
@@ -553,19 +695,30 @@ const NOISE_PATTERNS = [
 ];
 const isNoise = a => NOISE_PATTERNS.some(p => p.test(a.message || ''));
 
-function renderDetail(jobs, annotations, branch, runId) {
-  const content = $('detailContent');
+function setSev(s) {
+  sevFilter = s;
+  if (currentBranch) {
+    userPrefs[currentBranch] = userPrefs[currentBranch] || {};
+    userPrefs[currentBranch].sev = s;
+    localStorage.setItem('reviewPrefs', JSON.stringify(userPrefs));
+  }
+  document.querySelectorAll('.sev-tab').forEach(t => t.classList.toggle('active', t.dataset.sev === s));
+  renderErrors();
+}
 
-  const code = annotations.filter(a => !isNoise(a));
-  const noise = annotations.filter(isNoise);
+function renderErrors() {
+  const area = $('errorArea');
+  if (!area) return;
+
+  const jobs = currentJobs;
+  const code = currentAnns.filter(a => !isNoise(a));
+  const noise = currentAnns.filter(isNoise);
 
   const errs = code.filter(a => a.annotation_level === 'failure');
   const warns = code.filter(a => a.annotation_level === 'warning');
   const infos = code.filter(a => a.annotation_level === 'notice');
   const jobsOk = jobs.filter(j => j.conclusion === 'success').length;
   const jobsFail = jobs.filter(j => j.conclusion === 'failure').length;
-
-  $('detailSub').textContent = `${jobsOk}/${jobs.length} Job 通过`;
 
   let html = '';
 
@@ -586,29 +739,31 @@ function renderDetail(jobs, annotations, branch, runId) {
   }
   html += '</div>';
 
-  // 无代码错误
-  if (code.length === 0) {
-    const allOk = jobs.length > 0 && jobsFail === 0;
-    if (allOk) {
-      html += '<div class="empty">✅ 全部检查通过，没有发现代码问题</div>';
-    } else if (jobs.length === 0) {
-      html += '<div class="empty">本次运行没有 Job 数据</div>';
+  // 应用严重程度筛选
+  let filtered = code;
+  if (sevFilter !== 'all') filtered = code.filter(a => a.annotation_level === sevFilter);
+
+  if (filtered.length === 0) {
+    if (code.length === 0) {
+      const allOk = jobs.length > 0 && jobsFail === 0;
+      html += allOk
+        ? '<div class="empty">✅ 全部检查通过，没有发现代码问题</div>'
+        : '<div class="empty">⚠️ 没有代码错误注解<br><span style="font-size:11.5px">该运行可能因环境原因失败</span></div>';
     } else {
-      html += `<div class="empty">⚠️ 没有代码错误注解<br>
-        <span style="font-size:11.5px">该运行可能因环境原因失败，点击上方 Job 标签到 GitHub 查看日志</span></div>`;
+      html += `<div class="empty">该严重程度下没有条目<br><span style="font-size:11.5px">切换到「全部」查看 ${code.length} 条</span></div>`;
     }
-    content.innerHTML = html + buildNoiseHtml(noise);
+    html += buildNoiseHtml(noise);
+    area.innerHTML = html;
     return;
   }
 
   // 按文件分组
   const byFile = {};
-  for (const a of code) {
+  for (const a of filtered) {
     const p = a.path || '(未知文件)';
     (byFile[p] = byFile[p] || []).push(a);
   }
 
-  // 文件排序：错误数多的在前
   const files = Object.entries(byFile).sort((a, b) => b[1].length - a[1].length);
 
   for (const [filePath, anns] of files) {
@@ -617,38 +772,28 @@ function renderDetail(jobs, annotations, branch, runId) {
 
     html += `<div class="error-group open">
       <div class="group-header" onclick="this.parentElement.classList.toggle('open')">
-        <span class="arrow">▶</span>
-        <span>${icon}</span>
+        <span class="arrow">▶</span><span>${icon}</span>
         <span class="fname">${esc(filePath)}</span>
         <span class="count">${anns.length} 个问题</span>
       </div>
       <div class="group-body">`;
 
-    // 文件内按 Job 分组
     const byJob = {};
-    for (const a of anns) {
-      (byJob[a.jobName || '未知'] = byJob[a.jobName || '未知'] || []).push(a);
-    }
+    for (const a of anns) (byJob[a.jobName || '未知'] = byJob[a.jobName || '未知'] || []).push(a);
 
     for (const [jobName, jobAnns] of Object.entries(byJob)) {
-      // 严重程度排序：error > warning > notice
       const order = { failure: 0, warning: 1, notice: 2 };
       jobAnns.sort((a, b) => (order[a.annotation_level] ?? 3) - (order[b.annotation_level] ?? 3));
-
       html += `<div class="job-label">📋 ${esc(jobName)} · ${jobAnns.length} 条</div>`;
-
       for (const a of jobAnns) {
-        const line = a.start_line
-          ? (a.end_line && a.end_line !== a.start_line ? `:${a.start_line}-${a.end_line}` : `:${a.start_line}`)
-          : '';
+        const line = a.start_line ? (a.end_line && a.end_line !== a.start_line ? `:${a.start_line}-${a.end_line}` : `:${a.start_line}`) : '';
         const lv = a.annotation_level === 'failure' ? '❌' : a.annotation_level === 'warning' ? '⚠️' : '💡';
-        const ghUrl = `https://github.com/zzllcake/-/blob/${branch}/${filePath}${line}`;
+        const ghUrl = `https://github.com/zzllcake/-/blob/${currentBranch}/${filePath}${line}`;
         const title = a.title && a.title !== a.message ? a.title : '';
-
         html += `<div class="error-item">
           <span class="icon">${lv}</span>
           <div class="info">
-            <div class="loc"><a href="${ghUrl}" target="_blank" title="在 GitHub 打开">${esc(filePath)}${line}</a></div>
+            <div class="loc"><a href="${ghUrl}" target="_blank">${esc(filePath)}${line}</a></div>
             <div class="msg">${esc(a.message)}</div>
             ${title ? `<div class="rule">${esc(title)}</div>` : ''}
           </div>
@@ -658,33 +803,159 @@ function renderDetail(jobs, annotations, branch, runId) {
     html += '</div></div>';
   }
 
-  content.innerHTML = html + buildNoiseHtml(noise);
+  html += buildNoiseHtml(noise);
+  area.innerHTML = html;
 }
 
 function buildNoiseHtml(noise) {
   if (!noise || noise.length === 0) return '';
-  let html = `<div class="error-group" style="margin-top:14px">
+  let html = `<div class="error-group" style="margin-top:12px">
     <div class="group-header" onclick="this.parentElement.classList.toggle('open')" style="opacity:.6">
-      <span class="arrow">▶</span>
-      <span>⚙️</span>
+      <span class="arrow">▶</span><span>⚙️</span>
       <span class="fname">工作流环境提示（非代码问题）</span>
       <span class="count">${noise.length} 条</span>
     </div>
     <div class="group-body">
       <div style="padding:8px 13px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border)">
-        💡 GitHub Actions 运行环境提示（actions 版本、Node 版本等），不影响代码质量
+        💡 GitHub Actions 运行环境提示，不影响代码质量
       </div>`;
-  for (const a of noise.slice(0, 15)) {
-    html += `<div class="error-item" style="opacity:.55">
-      <span class="icon">⚙️</span>
-      <div class="info"><div class="msg" style="font-size:11.5px">${esc(a.message)}</div></div>
-    </div>`;
+  for (const a of noise.slice(0, 10)) {
+    html += `<div class="error-item" style="opacity:.55"><span class="icon">⚙️</span>
+      <div class="info"><div class="msg" style="font-size:11.5px">${esc(a.message)}</div></div></div>`;
   }
-  if (noise.length > 15) {
-    html += `<div style="padding:8px 13px;font-size:11px;color:var(--muted)">... 还有 ${noise.length - 15} 条</div>`;
+  if (noise.length > 10) html += `<div style="padding:8px 13px;font-size:11px;color:var(--muted)">... 还有 ${noise.length - 10} 条</div>`;
+  return html + '</div></div>';
+}
+
+// ============================================================
+// 重新执行审查
+// ============================================================
+async function rerunReview() {
+  if (!currentRunId) return;
+  setBtnLoading('btnRerun', true);
+  showLog('⏳ 正在重新执行审查...', 'info');
+  try {
+    await api(`/actions/runs/${currentRunId}/rerun`, { method: 'POST' });
+    showLog('✅ 已触发重新执行！稍后刷新查看结果', 'ok');
+    setTimeout(() => refreshAll(false), 5000);
+  } catch (e) {
+    showLog('❌ 重新执行失败: ' + esc(e.message), 'err');
+  } finally {
+    setBtnLoading('btnRerun', false, '🔄 重新执行审查');
   }
-  html += '</div></div>';
-  return html;
+}
+
+// ============================================================
+// 编辑弹窗
+// ============================================================
+function openEdit() {
+  const b = allBranches.find(x => x.branch === currentBranch);
+  $('editName').value = currentBranch || '';
+  $('editPrTitle').value = b && b.pr ? b.pr.title : '';
+
+  if (b && b.pr) {
+    $('prTitleField').style.display = 'block';
+  } else {
+    $('prTitleField').style.display = 'none';
+  }
+
+  const pref = userPrefs[currentBranch] || {};
+  $('editSevFilter').value = pref.sev || 'all';
+  $('editHideNoise').checked = pref.hideNoise !== false;
+  $('editCollapseOk').checked = !!pref.collapseOk;
+
+  $('editMsg').style.display = 'none';
+  $('editModal').classList.add('show');
+}
+
+function closeEdit() {
+  $('editModal').classList.remove('show');
+}
+
+function editMsg(text, type) {
+  const el = $('editMsg');
+  const colors = { info: 'var(--accent)', ok: 'var(--green)', err: 'var(--red)', warn: 'var(--yellow)' };
+  const bgs = { info: 'rgba(88,166,255,.12)', ok: 'rgba(63,185,80,.12)', err: 'rgba(248,81,73,.12)', warn: 'rgba(210,153,34,.12)' };
+  el.style.display = 'block';
+  el.style.color = colors[type];
+  el.style.background = bgs[type];
+  el.innerHTML = text;
+}
+
+async function saveEdit() {
+  const oldName = currentBranch;
+  const newName = $('editName').value.trim();
+  const newPrTitle = $('editPrTitle').value.trim();
+  const b = allBranches.find(x => x.branch === oldName);
+
+  $('btnSaveEdit').disabled = true;
+  $('btnSaveEdit').textContent = '⏳ 保存中';
+
+  try {
+    let renamed = false;
+
+    // 1. 改分支名
+    if (newName && newName !== oldName) {
+      if (!/^[a-zA-Z0-9._\/-]+$/.test(newName)) {
+        throw new Error('分支名只能包含字母数字和 . _ / -');
+      }
+      editMsg('⏳ 正在重命名分支...', 'info');
+
+      // 取当前分支 SHA
+      const ref = await api(`/git/refs/heads/${encodeURIComponent(oldName)}`);
+      const sha = ref.object.sha;
+
+      // 创建新分支
+      await api('/git/refs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: `refs/heads/${newName}`, sha })
+      });
+
+      // 删除旧分支
+      await api(`/git/refs/heads/${encodeURIComponent(oldName)}`, { method: 'DELETE' });
+      renamed = true;
+    }
+
+    // 2. 改 PR 标题
+    if (newPrTitle && b && b.pr && newPrTitle !== b.pr.title) {
+      editMsg('⏳ 正在更新 PR 标题...', 'info');
+      await api(`/pulls/${b.pr.number}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newPrTitle })
+      });
+    }
+
+    // 3. 保存本地偏好
+    const targetBranch = renamed ? newName : oldName;
+    userPrefs[targetBranch] = {
+      sev: $('editSevFilter').value,
+      hideNoise: $('editHideNoise').checked,
+      collapseOk: $('editCollapseOk').checked
+    };
+    if (renamed) delete userPrefs[oldName];
+    localStorage.setItem('reviewPrefs', JSON.stringify(userPrefs));
+
+    editMsg('✅ 保存成功！', 'ok');
+
+    setTimeout(async () => {
+      closeEdit();
+      await loadBranches();
+      if (renamed) {
+        const nb = allBranches.find(x => x.branch === newName);
+        if (nb && nb.lastRun) selectBranch(newName, nb.lastRun.id);
+      } else if (currentBranch) {
+        selectBranch(currentBranch, currentRunId);
+      }
+    }, 800);
+
+  } catch (e) {
+    editMsg('❌ 保存失败: ' + esc(e.message), 'err');
+  } finally {
+    $('btnSaveEdit').disabled = false;
+    $('btnSaveEdit').textContent = '💾 保存';
+  }
 }
 
 // ============================================================
@@ -697,7 +968,6 @@ async function createBranch() {
 
   setBtnLoading('btnBranch', true);
   showLog('⏳ 获取 main 分支信息...', 'info');
-
   try {
     const main = await api('/git/refs/heads/main');
     showLog(`⏳ 创建分支 ${esc(name)} ...`, 'info');
@@ -707,9 +977,7 @@ async function createBranch() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ref: `refs/heads/${name}`, sha: main.object.sha })
       });
-      showLog(`✅ 分支 <b>${esc(name)}</b> 创建成功！<br>
-        📌 推送代码：<code>git push origin HEAD:${esc(name)}</code><br>
-        💡 推送后点「刷新」查看审查结果`, 'ok');
+      showLog(`✅ 分支 <b>${esc(name)}</b> 创建成功！<br>📌 推送：<code>git push origin HEAD:${esc(name)}</code>`, 'ok');
     } catch (e) {
       if (e.message.includes('already exists')) showLog(`ℹ️ 分支 <b>${esc(name)}</b> 已存在`, 'warn');
       else throw e;
@@ -728,44 +996,31 @@ async function createPR() {
 
   setBtnLoading('btnPR', true);
   showLog('⏳ 检查分支...', 'info');
-
   try {
     let exists = false;
     try { await api(`/git/refs/heads/${name}`); exists = true; } catch (e) {}
-
     if (!exists) {
       showLog('⏳ 分支不存在，正在创建...', 'info');
       const main = await api('/git/refs/heads/main');
       await api('/git/refs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ref: `refs/heads/${name}`, sha: main.object.sha })
       });
     }
 
     showLog('⏳ 创建 PR...', 'info');
     const pr = await api('/pulls', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: `review: ${name}`,
-        head: name,
-        base: 'main',
-        body: `自动创建的分支审查\n\n---\n🤖 代码审查控制台`
-      })
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: `review: ${name}`, head: name, base: 'main', body: `自动创建的分支审查\n\n---\n🤖 代码审查控制台` })
     });
-
-    showLog(`✅ PR <b>#${pr.number}</b> 创建成功！<br>
-      🔗 <a href="${pr.html_url}" target="_blank" style="color:var(--accent)">在 GitHub 查看</a><br>
-      ⏳ 审查即将开始，稍后刷新查看`, 'ok');
+    showLog(`✅ PR <b>#${pr.number}</b> 已创建！<br>🔗 <a href="${pr.html_url}" target="_blank" style="color:var(--accent)">GitHub 查看</a>`, 'ok');
     setTimeout(refreshAll, 3000);
   } catch (e) {
     let hint = '';
     if (e.message.includes('No commits between')) {
-      hint = `<br><br>💡 <b>原因</b>：分支与 main 内容相同，没有新提交<br>
-        <b>解决</b>：本地改代码后 <code>git push origin HEAD:${esc(name)}</code>`;
+      hint = `<br><br>💡 分支与 main 无差异，无法创建 PR<br>先本地提交：<code>git push origin HEAD:${esc(name)}</code>`;
     } else if (e.message.includes('A pull request already exists')) {
-      hint = '<br><br>💡 该分支的 PR 已存在';
+      hint = '<br><br>💡 该分支 PR 已存在';
     }
     showLog('❌ 创建失败: ' + esc(e.message) + hint, 'err');
   } finally {
@@ -790,16 +1045,12 @@ async function updateStatus() {
 }
 
 async function refreshAll(manual = true) {
-  if (manual) {
-    setBtnLoading('btnRefresh', true);
-    $('btnRefresh').textContent = '⏳ 刷新中';
-  }
+  if (manual) { setBtnLoading('btnRefresh', true); $('btnRefresh').textContent = '⏳ 刷新中'; }
   try {
     await updateStatus();
     await loadBranches();
     if (currentBranch) await selectBranch(currentBranch, currentRunId);
-    lastRefreshTime = new Date();
-    $('lastRefresh').textContent = `上次刷新 ${fmtTime(lastRefreshTime)}`;
+    $('lastRefresh').textContent = `上次刷新 ${new Date().toLocaleTimeString('zh-CN')}`;
   } finally {
     if (manual) setBtnLoading('btnRefresh', false, '🔄 刷新');
     $('btnRefresh').textContent = '🔄 刷新';
@@ -807,20 +1058,18 @@ async function refreshAll(manual = true) {
 }
 
 function toggleAuto() {
-  if ($('autoRefresh').checked) startAuto();
-  else stopAuto();
+  if ($('autoRefresh').checked) startAuto(); else stopAuto();
 }
-
 function startAuto() {
   stopAuto();
-  autoTimer = setInterval(() => {
-    if (!document.hidden) refreshAll(false);
-  }, 30000);
+  autoTimer = setInterval(() => { if (!document.hidden) refreshAll(false); }, 30000);
 }
-
 function stopAuto() {
   if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
 }
+
+// 空状态点击外部区域
+$('editModal').addEventListener('click', e => { if (e.target === $('editModal')) closeEdit(); });
 
 // ============================================================
 // 初始化
