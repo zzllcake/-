@@ -25,9 +25,20 @@ function getToken() {
 const TOKEN = getToken();
 const AUTH_HEADER = TOKEN ? `token ${TOKEN}` : '';
 
-// 请求 GitHub API
+// 请求 GitHub API（带超时和缓存）
+const CACHE = new Map();
+const CACHE_TTL = 60000; // 60 秒缓存
+
 function ghApi(path, method = 'GET', body = null) {
   return new Promise((resolve, reject) => {
+    // GET 请求查缓存
+    if (method === 'GET') {
+      const cached = CACHE.get(path);
+      if (cached && Date.now() - cached.time < CACHE_TTL) {
+        return resolve({ status: 200, data: cached.data, cached: true });
+      }
+    }
+
     const url = new URL(`${GH_API}${path}`);
     const options = {
       hostname: url.hostname,
@@ -38,7 +49,8 @@ function ghApi(path, method = 'GET', body = null) {
         'User-Agent': 'code-review-console/1.0',
         'Accept': 'application/vnd.github.v3+json',
         'Authorization': AUTH_HEADER,
-      }
+      },
+      timeout: 15000,
     };
     if (body) {
       options.headers['Content-Type'] = 'application/json';
@@ -48,12 +60,27 @@ function ghApi(path, method = 'GET', body = null) {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
+        let parsed;
         try {
-          resolve({ status: res.statusCode, data: JSON.parse(data) });
+          parsed = JSON.parse(data);
         } catch {
-          resolve({ status: res.statusCode, data: data });
+          parsed = data;
         }
+        // 成功的 GET 请求写入缓存
+        if (method === 'GET' && res.statusCode === 200) {
+          CACHE.set(path, { data: parsed, time: Date.now() });
+          // 限制缓存大小
+          if (CACHE.size > 50) {
+            const oldest = [...CACHE.entries()].sort((a, b) => a[1].time - b[1].time)[0];
+            CACHE.delete(oldest[0]);
+          }
+        }
+        resolve({ status: res.statusCode, data: parsed });
       });
+    });
+    req.on('timeout', () => {
+      req.destroy();
+      reject(new Error('GitHub API 超时（15秒）'));
     });
     req.on('error', (e) => reject(e));
     if (body) req.write(JSON.stringify(body));
