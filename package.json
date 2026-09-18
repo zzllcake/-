@@ -17,7 +17,10 @@
     "check:all": "npm run lint && npm run format:check && npm run typecheck && npm run test",
     "检查": "npm run check:all",
     "lint:report": "node scripts/lint-report.cjs",
-    "lint:all": "node scripts/lint-report.cjs src/"
+    "lint:all": "node scripts/lint-report.cjs src/",
+    "verify:samples": "node scripts/verify-samples.cjs",
+    "diagnose": "node scripts/diagnose-missed.cjs",
+    "lint:report:all": "node scripts/lint-report.cjs --no-ignore src/"
   },
   "devDependencies": {
     "@eslint/js": "^9.8.0",

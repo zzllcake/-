@@ -198,6 +198,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .modal-foot{display:flex;gap:8px;justify-content:flex-end;padding:13px 18px;border-top:1px solid var(--border)}
 .modal-msg{padding:9px 12px;border-radius:6px;font-size:12px;margin-bottom:14px;display:none}
 
+/* ===== 扫描统计栏 / 跳过文件面板 ===== */
+.scan-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:14px}
+.scan-item{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:9px 11px;display:flex;align-items:center;gap:8px}
+.scan-item .si-ico{font-size:15px}
+.scan-item .si-n{font-size:16px;font-weight:700;line-height:1;color:var(--accent)}
+.scan-item .si-l{font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap}
+.scan-item.err .si-n{color:var(--red)}
+.scan-item.warn .si-n{color:var(--yellow)}
+.scan-item.ok .si-n{color:var(--green)}
+.scan-item.warn{border-color:rgba(210,153,34,.4)}
+.scan-item.err{border-color:rgba(248,81,73,.4)}
+
+.skip-panel{border:1px solid rgba(210,153,34,.4);border-radius:var(--radius);overflow:hidden;margin-bottom:14px}
+.skip-panel-head{padding:9px 13px;background:rgba(210,153,34,.12);font-size:12.5px;font-weight:600;color:var(--yellow)}
+.skip-panel-body{padding:11px 13px;background:var(--bg)}
+.skip-line{display:flex;gap:9px;align-items:flex-start;font-size:12px;line-height:1.6;margin-bottom:7px}
+.skip-tag{flex-shrink:0;padding:2px 8px;border-radius:9px;font-size:10.5px;font-weight:600}
+.skip-tag.tag-ignore{background:rgba(210,153,34,.2);color:var(--yellow)}
+.skip-tag.tag-parse{background:rgba(248,81,73,.2);color:var(--red)}
+.skip-hint{margin-top:9px;padding-top:9px;border-top:1px solid var(--border);font-size:11.5px;color:var(--muted);line-height:1.7}
+.skip-hint code{background:rgba(0,0,0,.35);padding:1px 5px;border-radius:3px;color:var(--accent)}
+
 /* ===== 分页 / 提示 ===== */
 .pagination{display:flex;align-items:center;justify-content:center;gap:6px;padding:14px 0;flex-wrap:wrap}
 .pagination .page-info{font-size:11.5px;color:var(--muted);padding:0 8px}
@@ -358,6 +380,7 @@ let errorPage = 1;          // 错误列表分页
 let apiTruncated = false;   // GitHub API 是否截断
 let rawAnnCount = 0;        // 原始注解数量（未过滤）
 let realStats = null;       // 来自审查评论的真实统计 {total, errors, warnings}
+let scanStats = null;       // 扫描覆盖统计 {ignored, parseFailed}
 let skippedFiles = [];      // 被忽略的文件
 let artifactUrl = '';       // 完整报告 artifact 链接
 let autoTimer = null;
@@ -617,6 +640,8 @@ async function selectBranch(branch, runId) {
 // ============================================================
 async function fetchRealStats() {
   realStats = null;
+  scanStats = null;
+  skippedFiles = [];
   const b = allBranches.find(x => x.branch === currentBranch);
   if (!b || !b.pr) return;
 
@@ -626,7 +651,7 @@ async function fetchRealStats() {
       .sort((a, c) => new Date(c.created_at) - new Date(a.created_at))[0];
     if (!bot) return;
 
-    // 解析统计表: | ❌ error | **58** | ...
+    // 解析分级统计表: | ❌ error | **58** | ...
     const errMatch = bot.body.match(/error\s*\|\s*\*\*(\d+)\*\*/i);
     const warnMatch = bot.body.match(/warning\s*\|\s*\*\*(\d+)\*\*/i);
     const totalMatch = bot.body.match(/合计\s*\|\s*\*\*(\d+)\*\*/i);
@@ -639,10 +664,18 @@ async function fetchRealStats() {
       };
     }
 
-    // 解析解析失败数
-    const parseMatch = bot.body.match(/有\s*\*\*(\d+)\*\*\s*个文件解析失败/);
-    if (parseMatch) {
-      skippedFiles = [`(解析失败 ${parseMatch[1]} 个文件)`];
+    // 解析扫描覆盖统计: | 被忽略跳过的文件 | **4** |
+    const ignoredMatch = bot.body.match(/被忽略跳过的文件\s*\|\s*\*\*(\d+)\*\*/);
+    const parseMatch = bot.body.match(/解析失败的文件\s*\|\s*\*\*(\d+)\*\*/);
+
+    scanStats = {
+      ignored: ignoredMatch ? parseInt(ignoredMatch[1]) : 0,
+      parseFailed: parseMatch ? parseInt(parseMatch[1]) : 0,
+    };
+
+    // 从 artifact 提示中提取信息
+    if (parseMatch && parseInt(parseMatch[1]) > 0) {
+      skippedFiles.push(`(解析失败 ${parseMatch[1]} 个文件)`);
     }
   } catch (e) { /* 忽略 */ }
 }
@@ -696,7 +729,10 @@ function renderDetailFrame() {
     </div>
   </div>`;
 
-  // ---- 3. 错误区域容器 ----
+  // ---- 3. 扫描覆盖统计栏（P3 需求）----
+  html += buildScanStatsBar();
+
+  // ---- 4. 错误区域容器 ----
   html += `<div class="section">
     <div class="section-head">
       <h3>🔍 本次审查错误</h3>
@@ -741,6 +777,73 @@ function renderDetailFrame() {
 
   $('detailView').innerHTML = html;
   renderErrors();
+}
+
+// ============================================================
+// 扫描覆盖统计栏（P3）
+// ============================================================
+function buildScanStatsBar() {
+  const filesInErrors = new Set(currentAnns.map(a => a.path).filter(Boolean)).size;
+  const jobsOk = currentJobs.filter(j => j.conclusion === 'success').length;
+  const ignored = scanStats ? scanStats.ignored : 0;
+  const parseFailed = scanStats ? scanStats.parseFailed : 0;
+
+  // 真实总数（来自评论）优先，否则用注解数
+  const trueErrors = realStats ? realStats.errors : currentAnns.filter(a => a.annotation_level === 'failure').length;
+  const trueWarnings = realStats ? realStats.warnings : currentAnns.filter(a => a.annotation_level === 'warning').length;
+
+  let html = `<div class="scan-bar">
+    <div class="scan-item">
+      <span class="si-ico">📁</span>
+      <div><div class="si-n">${filesInErrors}</div><div class="si-l">报错文件数</div></div>
+    </div>
+    <div class="scan-item ${ignored > 0 ? 'warn' : ''}">
+      <span class="si-ico">⏭️</span>
+      <div><div class="si-n">${ignored}</div><div class="si-l">跳过文件</div></div>
+    </div>
+    <div class="scan-item ${parseFailed > 0 ? 'err' : ''}">
+      <span class="si-ico">⚠️</span>
+      <div><div class="si-n">${parseFailed}</div><div class="si-l">解析失败</div></div>
+    </div>
+    <div class="scan-item err">
+      <span class="si-ico">❌</span>
+      <div><div class="si-n">${trueErrors}</div><div class="si-l">真实 error${realStats ? '' : '(仅注解)'}</div></div>
+    </div>
+    <div class="scan-item warn">
+      <span class="si-ico">⚠️</span>
+      <div><div class="si-n">${trueWarnings}</div><div class="si-l">真实 warning${realStats ? '' : '(仅注解)'}</div></div>
+    </div>
+    <div class="scan-item ok">
+      <span class="si-ico">📋</span>
+      <div><div class="si-n">${jobsOk}/${currentJobs.length}</div><div class="si-l">Job 通过</div></div>
+    </div>
+  </div>`;
+
+  // 跳过文件面板（P3）
+  if (ignored > 0 || parseFailed > 0) {
+    html += `<div class="skip-panel">
+      <div class="skip-panel-head">
+        <span>⏭️ 未参与检测的文件（${ignored + parseFailed} 个）</span>
+      </div>
+      <div class="skip-panel-body">
+        ${ignored > 0 ? `<div class="skip-line">
+          <span class="skip-tag tag-ignore">被忽略</span>
+          <span>${ignored} 个文件被 .eslintrc.cjs 的 ignorePatterns 排除，<b>完全没有扫描</b></span>
+        </div>` : ''}
+        ${parseFailed > 0 ? `<div class="skip-line">
+          <span class="skip-tag tag-parse">解析失败</span>
+          <span>${parseFailed} 个文件语法无法解析，已记录为 info 级别（未静默丢弃）</span>
+        </div>` : ''}
+        <div class="skip-hint">
+          💡 <b>修复建议</b>：如果这些是源码文件，请从 <code>.eslintrc.cjs</code> 的
+          <code>ignorePatterns</code> 中移除对应模式。<br>
+          运行 <code>node scripts/diagnose-missed.cjs</code> 可查看完整的跳过文件列表。
+        </div>
+      </div>
+    </div>`;
+  }
+
+  return html;
 }
 
 // ============================================================

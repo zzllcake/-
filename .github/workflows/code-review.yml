@@ -32,6 +32,7 @@ jobs:
       errors: ${{ steps.stats.outputs.errors }}
       warnings: ${{ steps.stats.outputs.warnings }}
       parse_failed: ${{ steps.stats.outputs.parse_failed }}
+      ignored: ${{ steps.stats.outputs.ignored }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -98,11 +99,13 @@ jobs:
             echo "errors=$(node -p "require('./reports/eslint-summary.json').统计.error数量")" >> $GITHUB_OUTPUT
             echo "warnings=$(node -p "require('./reports/eslint-summary.json').统计.warning数量")" >> $GITHUB_OUTPUT
             echo "parse_failed=$(node -p "require('./reports/eslint-summary.json').解析失败数")" >> $GITHUB_OUTPUT
+            echo "ignored=$(node -p "require('./reports/eslint-summary.json').被忽略文件数 || 0")" >> $GITHUB_OUTPUT
           else
             echo "total=0" >> $GITHUB_OUTPUT
             echo "errors=0" >> $GITHUB_OUTPUT
             echo "warnings=0" >> $GITHUB_OUTPUT
             echo "parse_failed=0" >> $GITHUB_OUTPUT
+            echo "ignored=0" >> $GITHUB_OUTPUT
           fi
 
       # 有 error 则失败（warning 不阻断）
@@ -299,6 +302,7 @@ jobs:
             const lintErrors = '${{ needs.lint.outputs.errors }}';
             const lintWarnings = '${{ needs.lint.outputs.warnings }}';
             const parseFailed = '${{ needs.lint.outputs.parse_failed }}';
+            const ignoredFiles = '${{ needs.lint.outputs.ignored }}';
 
             if (lintTotal && lintTotal !== '' && lintTotal !== '0') {
               body += `### 📊 代码问题分级统计\n\n`;
@@ -307,8 +311,19 @@ jobs:
               body += `| ❌ error | **${lintErrors}** | 阻断级问题（安全/类型/未定义） |\n`;
               body += `| ⚠️ warning | **${lintWarnings}** | 建议修复（规范/风格/复杂度） |\n`;
               body += `| 📋 合计 | **${lintTotal}** | 全部问题数量 |\n\n`;
+
+              // 扫描统计（前端统计栏数据源）
+              body += `### 🔎 扫描覆盖统计\n\n`;
+              body += `| 指标 | 数量 |\n`;
+              body += `|------|------|\n`;
+              body += `| 被忽略跳过的文件 | **${ignoredFiles}** |\n`;
+              body += `| 解析失败的文件 | **${parseFailed}** |\n\n`;
+
               if (parseFailed && parseFailed !== '0') {
                 body += `> ⚠️ 有 **${parseFailed}** 个文件解析失败，已记录为 info 级别（未静默跳过）\n\n`;
+              }
+              if (ignoredFiles && ignoredFiles !== '0') {
+                body += `> 💡 有 **${ignoredFiles}** 个文件被 ignorePatterns 排除。若这些是源码，请检查 .eslintrc.cjs\n\n`;
               }
               body += `> 📄 完整问题列表（${lintTotal} 条，不截断）见 Artifact: [**eslint-report**](${runUrl}#artifacts)\n\n`;
             }

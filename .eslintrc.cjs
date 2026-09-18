@@ -21,6 +21,14 @@ module.exports = {
     sourceType: 'module',
     project: true,
     tsconfigRootDir: __dirname,
+    // P1-3: 解析兼容 —— 支持 ES2022+ / JSX / TSX / 装饰器
+    ecmaFeatures: {
+      jsx: true,
+      globalReturn: false,
+      impliedStrict: true,
+    },
+    // 允许 .tsx 文件中的 JSX
+    jsxPragma: null,
   },
   plugins: ['@typescript-eslint', 'import', 'security'],
   extends: [
@@ -260,8 +268,12 @@ module.exports = {
     '*.config.*',
     'scripts/',
     '*.py',
+    // ---- 测试样本（故意含大量错误，不参与主分支检查）----
+    // 验证方法: npm run verify:samples （内部用 ignore:false 强制扫描）
+    // 测试分支: 可从 ignorePatterns 移除对应行，让 CI 检出这些错误
     'src/error-types*.ts',
     'src/error-test*.ts',
     'src/review-samples*.ts',
+    'src/samples/',
   ],
 };

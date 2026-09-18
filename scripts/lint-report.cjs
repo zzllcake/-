@@ -26,6 +26,7 @@ const SUMMARY_OUT = path.join(REPORT_DIR, 'eslint-summary.json');
 async function main() {
   const args = process.argv.slice(2);
   const jsonOnly = args.includes('--json');
+  const noIgnore = args.includes('--no-ignore');   // 诊断用: 绕过 ignorePatterns
   const targets = args.filter(a => !a.startsWith('--'));
   const lintTargets = targets.length > 0 ? targets : ['src/**/*.{ts,tsx,js,jsx}'];
 
@@ -35,6 +36,7 @@ async function main() {
   const eslint = new ESLint({
     cwd: ROOT,
     errorOnUnmatchedPattern: false,
+    ignore: !noIgnore,   // --no-ignore 时强制扫描全部文件
   });
 
   // ---- 记录忽略的文件（调试用）----
@@ -90,13 +92,56 @@ async function main() {
     debugLog.警告 = `有 ${suspicious.length} 个疑似源码/测试文件被 ignore 配置排除，可能导致漏检`;
   }
 
-  // ---- 执行扫描 ----
-  let results;
+  // ---- 执行扫描（P1-4: 分批 + 超时保护）----
+  const BATCH_SIZE = 20;        // 每批文件数
+  const BATCH_TIMEOUT = 120000; // 每批超时 2 分钟
+
+  // 展开 glob 得到实际文件列表（用于分批）
+  let fileList = [];
   try {
-    results = await eslint.lintFiles(lintTargets);
+    const { globSync } = require('glob');
+    for (const t of lintTargets) {
+      fileList.push(...globSync(t, { cwd: ROOT, absolute: false, ignore: ['node_modules/**'] }));
+    }
   } catch (e) {
-    console.error('❌ ESLint 执行失败:', e.message);
-    process.exit(2);
+    // 没有 glob 包时退回单次扫描
+    fileList = null;
+  }
+
+  let results = [];
+  const timeouts = [];
+
+  if (fileList && fileList.length > BATCH_SIZE) {
+    console.log(`📦 分批扫描: ${fileList.length} 个文件，分 ${Math.ceil(fileList.length / BATCH_SIZE)} 批`);
+    for (let i = 0; i < fileList.length; i += BATCH_SIZE) {
+      const batch = fileList.slice(i, i + BATCH_SIZE);
+      const batchNo = Math.floor(i / BATCH_SIZE) + 1;
+      const totalBatches = Math.ceil(fileList.length / BATCH_SIZE);
+      try {
+        const batchResults = await Promise.race([
+          eslint.lintFiles(batch),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('BATCH_TIMEOUT')), BATCH_TIMEOUT)
+          ),
+        ]);
+        results.push(...batchResults);
+        console.log(`   批次 ${batchNo}/${totalBatches}: ${batch.length} 个文件 ✅`);
+      } catch (e) {
+        if (e.message === 'BATCH_TIMEOUT') {
+          timeouts.push(...batch);
+          console.log(`   批次 ${batchNo}/${totalBatches}: ⏱️ 超时，跳过 ${batch.length} 个文件`);
+        } else {
+          console.log(`   批次 ${batchNo}/${totalBatches}: ❌ ${e.message}`);
+        }
+      }
+    }
+  } else {
+    try {
+      results = await eslint.lintFiles(lintTargets);
+    } catch (e) {
+      console.error('❌ ESLint 执行失败:', e.message);
+      process.exit(2);
+    }
   }
 
   // ---- 汇总统计 ----
@@ -171,9 +216,34 @@ async function main() {
   stats.info数量 = byType.info;
   stats.涉及文件数 = Object.keys(byFile).length;
 
+  // ---- P1-2: 轻量去重（只合并完全相同的错误）----
+  // 严禁按错误类型批量合并，只合并「同文件+同行+同列+同规则+同消息」的完全重复项
+  const seen = new Set();
+  const dedupRemoved = [];
+  const uniqueMessages = allMessages.filter(m => {
+    const key = `${m.文件}|${m.行}|${m.列}|${m.规则}|${m.信息}`;
+    if (seen.has(key)) {
+      dedupRemoved.push(key);
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+
+  // 重新按统计口径计数（去重后）
+  const finalStats = {
+    总数: uniqueMessages.length,
+    error数量: uniqueMessages.filter(m => m.等级 === 'error').length,
+    warning数量: uniqueMessages.filter(m => m.等级 === 'warning').length,
+    info数量: uniqueMessages.filter(m => m.等级 === 'info').length,
+    可自动修复: uniqueMessages.filter(m => m.可修复).length,
+    涉及文件数: new Set(uniqueMessages.map(m => m.文件)).size,
+    去重合并数: dedupRemoved.length,
+  };
+
   // ---- 排序：error 在前 ----
   const order = { error: 0, warning: 1, info: 2 };
-  allMessages.sort((a, b) => {
+  uniqueMessages.sort((a, b) => {
     const d = order[a.等级] - order[b.等级];
     if (d !== 0) return d;
     if (a.文件 !== b.文件) return a.文件.localeCompare(b.文件);
@@ -183,14 +253,15 @@ async function main() {
   const report = {
     生成时间: new Date().toISOString(),
     耗时毫秒: Date.now() - t0,
-    统计: stats,
+    统计: finalStats,
     文件统计: byFile,
     规则统计: Object.fromEntries(
       Object.entries(byRule).sort((a, b) => b[1] - a[1])
     ),
     解析失败: parseFailures,
+    超时文件: timeouts,
     调试日志: debugLog,
-    错误列表: allMessages,   // 完整列表，不截断
+    错误列表: uniqueMessages,   // 完整列表，不截断
   };
 
   // ---- 输出文件 ----
@@ -198,7 +269,7 @@ async function main() {
   fs.writeFileSync(JSON_OUT, JSON.stringify(report, null, 2), 'utf-8');
   fs.writeFileSync(SUMMARY_OUT, JSON.stringify({
     生成时间: report.生成时间,
-    统计: stats,
+    统计: finalStats,
     规则统计: report.规则统计,
     解析失败数: parseFailures.length,
     被忽略文件数: debugLog.被忽略的文件.length,
@@ -212,12 +283,13 @@ async function main() {
     console.log('══════════════════════════════════════════════════');
     console.log('  📊 代码审查完整统计');
     console.log('══════════════════════════════════════════════════');
-    console.log(`  总问题数    : ${stats.总数}`);
-    console.log(`  ❌ error    : ${stats.error数量}`);
-    console.log(`  ⚠️  warning  : ${stats.warning数量}`);
-    console.log(`  💡 info     : ${stats.info数量}`);
-    console.log(`  涉及文件    : ${stats.涉及文件数}`);
-    console.log(`  可自动修复  : ${stats.可自动修复}`);
+    console.log(`  总问题数    : ${finalStats.总数}`);
+    console.log(`  ❌ error    : ${finalStats.error数量}`);
+    console.log(`  ⚠️  warning  : ${finalStats.warning数量}`);
+    console.log(`  💡 info     : ${finalStats.info数量}`);
+    console.log(`  涉及文件    : ${finalStats.涉及文件数}`);
+    console.log(`  可自动修复  : ${finalStats.可自动修复}`);
+    if (finalStats.去重合并数 > 0) console.log(`  去重合并    : ${finalStats.去重合并数}`);
     console.log(`  耗时        : ${report.耗时毫秒}ms`);
     console.log('');
     console.log('  📁 调试日志:');
@@ -227,6 +299,7 @@ async function main() {
       debugLog.被忽略的文件.forEach(f => console.log(`       - ${f}`));
     }
     console.log(`     解析失败的文件   : ${parseFailures.length}`);
+    console.log(`     扫描超时的文件   : ${timeouts.length}`);
     parseFailures.forEach(p => {
       console.log(`       - ${p.文件}: ${p.错误[0]?.信息 || '未知'}`);
     });
@@ -252,7 +325,7 @@ async function main() {
   }
 
   // ---- 退出码：有 error 才非零（warning 不阻断）----
-  if (stats.error数量 > 0) process.exit(1);
+  if (finalStats.error数量 > 0) process.exit(1);
   process.exit(0);
 }
 
